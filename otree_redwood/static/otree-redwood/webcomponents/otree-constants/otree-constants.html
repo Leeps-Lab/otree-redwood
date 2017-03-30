@@ -1,0 +1,111 @@
+<link
+		rel="import"
+		href="/static/bower_components/polymer/polymer.html" />
+
+<!--
+`<otree-constants id="constants">`
+
+<script>
+	...
+	const session = this.$.constants.session;
+	...
+</script>
+
+-->
+<dom-module id="otree-constants">
+
+	<template>
+	</template>
+
+	<script>
+		var session = undefined;
+		var subsession = undefined;
+		var round = undefined;
+		var group = undefined;
+		var role = undefined;
+		var participantCode = undefined;
+		var appName = undefined;
+		var idInGroup = undefined;
+
+		Polymer({
+			is: 'otree-constants',
+			properties: {
+				/** Unique code for the session, e.g. {{ session.code }} */
+				session: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.session;
+					}
+				},
+				/** Subsession number, e.g. {{ subsession }} */
+				subsession: {
+					type: Number,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.subsession;
+					}
+				},
+				/** Round number, e.g. {{ player.round_number }} */
+				round: {
+					type: Number,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.round;
+					}
+				},
+				/** Group number, e.g. {{ player.group.id_in_subsession }} */
+				group: {
+					type: Number,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.group;
+					}
+				},
+				/** Player's role, e.g. {{ player.role }} */
+				role: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.role;
+					}
+				},
+				/** Participant's unique subject code,
+						e.g. {{ player.participant.code }}
+				*/
+				participantCode: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.participantCode;
+					}
+				},
+				/** Current app name, e.g. {{ subsession.app_name }} */
+				appName: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.appName;
+					}
+				},
+				/** Player's index in group. e.g. {{ player.id_in_group }} */
+				idInGroup: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.idInGroup;
+					}
+				}
+			}
+		});
+	</script>
+
+</dom-module>

@@ -1,0 +1,42 @@
+<link
+		rel="import"
+		href="/static/bower_components/polymer/polymer.html" />
+
+<link
+		rel="import" 
+		href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
+
+<!--
+-->
+<dom-module id="otree-continuous-decision">
+
+	<template>
+    <otree-constants id="constants"></otree-constants>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'otree-continuous-decision',
+			properties: {
+				component: {
+					type: String
+				},
+				groupDecisions: {
+					type: Object,
+					readonly: true,
+					notify: true
+				},
+				myDecision: {
+					type: Number,
+					notify: true
+				},
+				otherDecision: {
+					type: Number,
+					readonly: true,
+					notify: true
+				}
+			}
+		});
+	</script>
+
+</dom-module>
