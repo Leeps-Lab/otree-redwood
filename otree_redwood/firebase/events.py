@@ -15,7 +15,7 @@ import logging
 import threading
 import time
 
-from otree.models import Decision
+from otree_redwood.models import Decision
 
 
 logger = logging.getLogger(__name__)

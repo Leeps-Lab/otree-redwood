@@ -1,4 +1,5 @@
 from otree_redwood.firebase.events import SubperiodEmitter
+from otree_redwood.models import Decision
 
 
 class WaitPageMixin(object):

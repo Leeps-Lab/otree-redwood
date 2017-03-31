@@ -11,9 +11,9 @@ from django.core.management import call_command
 from django.db.models import Q
 
 from otree.firebase.ticks import collect_ticks
-from otree.models.decision import Decision
 from otree.models.session import Session
 from otree.session import SESSION_CONFIGS_DICT
+from otree_redwood.models import Decision
 
 from .base import TestCase
 
