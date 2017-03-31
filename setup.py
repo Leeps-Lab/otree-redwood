@@ -35,5 +35,6 @@ setup(
         'fasteners>=0.14.1,<1',
         'firebase-token-generator>=2.0.1,<3',
         'sseclient>0.0.12,<1',
+        'python-firebase>=1.2.0,<1'
     ]
 )
