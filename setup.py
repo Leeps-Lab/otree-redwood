@@ -31,4 +31,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
+    install_requires=[
+        'fasteners>=0.14.1,<1',
+        'firebase-token-generator>=2.0.1,<3',
+        'sseclient>0.0.12,<1',
+    ]
 )
