@@ -1,6 +1,7 @@
 import csv
 import datetime
 import functools
+import operator
 import vanilla
 
 from django.http import HttpResponse
@@ -25,6 +26,7 @@ class ExportTicks(vanilla.View):
             )
         )
 
+        decisions = Decision.objects.order_by('timestamp').all()
         header, ticks = collect_ticks(decisions)
         w = csv.DictWriter(response, header)
         w.writeheader()
@@ -48,8 +50,7 @@ class ExportRawDecisions(vanilla.View):
             )
         )
 
-        decisions = Decision.objects.filter(
-            functools.reduce(operator.or_, query)).order_by('timestamp').all()
+        decisions = Decision.objects.order_by('timestamp').all()
 
         response.write(serializers.serialize('json', decisions).encode('utf-8'))
 

@@ -119,7 +119,7 @@ class Thread(threading.Thread):
                     logger.warning(
                         'more than one handler for firebase event at path %s',
                         message_payload['path'])
-                else:
+                elif len(matches) == 1:
                     f, match, data = matches[0]
                     try:
                         f(match, data)

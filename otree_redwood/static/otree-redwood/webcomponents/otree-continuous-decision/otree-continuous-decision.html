@@ -46,7 +46,7 @@
 					type: Number,
 					observer: '_myDecisionChanged',
 					notify: true,
-					value: 0
+					value: 0.5
 				},
 				otherDecision: {
 					type: Number,
@@ -69,7 +69,7 @@
 				this.groupDecisions = this.groupDecisions || {};
 				const pcode = this.$.constants.participantCode;
 				if (Object.keys(this.groupDecisions).length != 2) {
-	                return 0;
+	                return 0.5;
 				}
 				for (let key in this.groupDecisions) {
                     if (key != pcode) {
@@ -77,7 +77,14 @@
                     }
                 }
 			},
-			_myDecisionChanged(newValue) {
+			_myDecisionChanged(newValue, oldValue) {
+				if (isNaN(newValue)) {
+					if (oldValue !== undefined)  {
+						newValue = oldValue;
+					} else {
+						newValue = 0.5;
+					}
+				}
 				this.groupDecisions = this.groupDecisions || {};
 				this.myDecision = parseFloat(newValue);
 				const pcode = this.$.constants.participantCode;
