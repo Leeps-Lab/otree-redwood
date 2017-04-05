@@ -3,7 +3,7 @@
   "authors": [
     "The Polymer Authors"
   ],
-  "version": "0.11.0",
+  "version": "0.10.0",
   "description": "Web Components for managing user data in web apps",
   "main": [
     "app-storage-behavior.html",
@@ -13,7 +13,7 @@
   ],
   "moduleType": [],
   "license": "http://polymer.github.io/LICENSE.txt",
-  "homepage": "https://github.com/PolymerElements/app-storage",
+  "homepage": "",
   "private": true,
   "dependencies": {
     "promise-polyfill": "polymerlabs/promise-polyfill#^1.0.0",
@@ -32,15 +32,5 @@
     "paper-button": "polymerelements/paper-button#^1.0.0",
     "platinum-sw": "polymerelements/platinum-sw#^1.3.0"
   },
-  "ignore": [],
-  "_release": "0.11.0",
-  "_resolution": {
-    "type": "version",
-    "tag": "v0.11.0",
-    "commit": "4fe31d012e8881ac35c1004fdb522ec94883b9ef"
-  },
-  "_source": "https://github.com/PolymerElements/app-storage.git",
-  "_target": "^0.11.0",
-  "_originalSource": "app-storage",
-  "_direct": true
+  "ignore": []
 }
