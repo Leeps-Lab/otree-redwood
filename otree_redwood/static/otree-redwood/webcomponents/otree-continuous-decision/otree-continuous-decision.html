@@ -68,14 +68,18 @@
 			_computeOtherDecision(groupDecisions) {
 				this.groupDecisions = this.groupDecisions || {};
 				const pcode = this.$.constants.participantCode;
-				if (Object.keys(this.groupDecisions).length != 2) {
-	                return 0.5;
-				}
+
+				// group decisions should have two entries maximum
+				console.assert (Object.keys(this.groupDecisions).length <= 2, "too many players in group decisions");
+
 				for (let key in this.groupDecisions) {
                     if (key != pcode) {
                     	return this.groupDecisions[key];
                     }
                 }
+
+                // if no key for the other player is found, just default to 0.5
+                return 0.5;
 			},
 			_myDecisionChanged(newValue, oldValue) {
 				if (isNaN(newValue)) {
