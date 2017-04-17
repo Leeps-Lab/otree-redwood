@@ -1,0 +1,37 @@
+<link
+		rel="import"
+		href="/static/bower_components/polymer/polymer.html" />
+
+<dom-module id="otree-ready">
+
+	<template>
+		<otree-constants id="constants"></otree-constants>
+		<firebase-document
+            path="[[_path]]"
+            data="{{ playerReady }}">
+        </firebase-document>
+	</template>
+
+	<script>
+
+		Polymer({
+			is: 'otree-ready',
+			properties: {
+				playerReady: {
+				    type: Boolean,
+                }
+			},
+			ready() {
+				this._path = (
+                    '/session/' + this.$.constants.session +
+                    '/app/' + this.$.constants.appName +
+                    '/subsession/' + this.$.constants.subsession +
+                    '/round/' + this.$.constants.round +
+                    '/group/' + this.$.constants.group +
+                    '/ready/' + this.$.constants.participantCode);
+				this.async(() => this.playerReady = true);
+			}
+		});
+	</script>
+
+</dom-module>
