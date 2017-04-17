@@ -92,6 +92,10 @@ _matchers = [
 ]
 
 
+def register_path(path, handlerFunction):
+    _matchers.append((path, handlerFunction))
+
+
 class Thread(threading.Thread):
 
     def __init__(self, fbURL):
