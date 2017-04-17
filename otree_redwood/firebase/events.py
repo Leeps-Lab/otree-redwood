@@ -96,7 +96,7 @@ class PeriodicEventEmitter(metaclass=ABCMeta):
         pass
 
 
-class SubperiodEmitter(EventEmitter):
+class SubperiodEmitter(PeriodicEventEmitter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
