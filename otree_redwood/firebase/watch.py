@@ -29,11 +29,11 @@ Decision Vectors:
 import atexit
 from collections import defaultdict
 import fasteners
-from firebase_token_generator import create_token
 import json
 import logging
 import re
 from sseclient import SSEClient
+import sys
 import threading
 
 from otree.models.participant import Participant
@@ -43,17 +43,12 @@ from otree_redwood.models import Decision
 
 logger = logging.getLogger(__name__)
 
-_FIREBASE_SECRET = 'uXop5iUjKkGfH20sFmdCMenX7QnUWmnWDde76WQR'
-
 
 def start():
-    lock = fasteners.InterProcessLock('/tmp/firewatch_lock_file')
-    if not lock.acquire(blocking=False):
-        return
-    atexit.register(lock.release)
-    t = Thread('https://otree.firebaseio.com/.json')
-    t.daemon = True
-    t.start()
+    global _watchThread
+    _watchThread = Thread('https://otree.firebaseio.com/.json')
+    _watchThread.daemon = True
+    _watchThread.start()
 
 
 _DECISION_RE = re.compile(
@@ -87,13 +82,9 @@ def _handleDecisionEvent(match, data):
     d.save()
 
 
-_matchers = [
-  (_DECISION_RE, _handleDecisionEvent),
-]
-
-
 def register_path(path, handlerFunction):
-    _matchers.append((path, handlerFunction))
+    global _watchThread
+    _watchThread.matchers.append((re.compile(path), handlerFunction))
 
 
 class Thread(threading.Thread):
@@ -101,30 +92,26 @@ class Thread(threading.Thread):
     def __init__(self, fbURL):
         super(Thread, self).__init__()
         self.fbURL = fbURL
-        self.token = create_token(_FIREBASE_SECRET, {'uid': '1'})
         self.decisions = defaultdict()
-        logger.info('Firewatch watching %s', fbURL)
+        self.matchers = [
+            (_DECISION_RE, _handleDecisionEvent),
+        ]
 
     def run(self):
-        params = {'auth': self.token}
-        messages = SSEClient(
-              self.fbURL,
-              params=params)
+        logger.info('Firewatch watching %s', self.fbURL)
+        messages = SSEClient(self.fbURL)
         for msg in messages:
             if msg.event == 'put':
                 message_payload = json.loads(msg.data)
                 matches = []
-                for (regex, handlerFunc) in _matchers:
+                for (regex, handlerFunc) in self.matchers:
                     match = regex.match(message_payload['path'])
                     if match:
                         matches.append(
                             (handlerFunc, match, message_payload['data']))
-                if len(matches) > 1:
-                    logger.warning(
-                        'more than one handler for firebase event at path %s',
-                        message_payload['path'])
-                elif len(matches) == 1:
-                    f, match, data = matches[0]
+                if len(matches) == 0:
+                    logging.warning('no match for %s (matchers=%s)', message_payload['path'], self.matchers)
+                for (f, match, data) in matches:
                     try:
                         f(match, data)
                     except:
