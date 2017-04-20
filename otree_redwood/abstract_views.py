@@ -1,9 +1,10 @@
+import logging
 from otree.api import Page as oTreePage
 from otree.views.abstract import global_lock
 
-from otree_redwood.firebase.events import SubperiodEmitter
-from otree_redwood.firebase.watch import register_path 
-from otree_redwood.models import Decision, RedwoodEvent
+from otree_redwood.consumers import connection_signal, connected_participants
+from otree_redwood.events import SubperiodEmitter
+from otree_redwood.models import Event
 
 
 class Page(oTreePage):
@@ -13,55 +14,42 @@ class Page(oTreePage):
     """
 
     def dispatch(self, *args, **kwargs):
-        self._players_ready = set()
-        register_path('/session/(?P<session>.*)' +
-            '/app/(?P<app>.*)' +
-            '/subsession/(?P<subsession>.*)' +
-            '/round/(?P<round>.*)' +
-            '/group/(?P<group>.*)' +
-            '/ready/(?P<participant_code>.*)', self._player_ready)
-        return super().dispatch(*args, **kwargs)
+        # Dispatch to super first so that variables are available.
+        result = super().dispatch(*args, **kwargs)
+        connection_signal.connect(self._check_if_all_players_ready)
+
+        return result
+
+    def before_next_page():
+        connection_signal.disconnect(self._check_if_all_players_ready)
 
     def when_all_players_ready(self):
         """Implement this to perform an action for the group once
         all players are ready.
         """
+        logging.info('all players ready!')
         pass
 
-    def _player_ready(self, match, data):
-        with global_lock():
-            self._players_ready.add(match.groupdict()['participant_code'])
-            if self._players_ready == set([player.participant.code for player in self.group.get_players()]):
-                if RedwoodEvent.objects.filter(
-                        component='period_start',
-                        session=self.session,
-                        subsession=self.subsession.name(),
-                        round=self.round_number,
-                        group=self.group.id_in_subsession).count() == 0:
-                    self.when_all_players_ready()
-                    RedwoodEvent(
-                        component='period_start',
-                        session=self.session,
-                        subsession=self.subsession.name(),
-                        round=self.round_number,
-                        group=self.group.id_in_subsession).save()
+    def _check_if_all_players_ready(self, **kwargs):
+        group_participants = set([player.participant.code for player in self.group.get_players()])
+        if connected_participants == group_participants:
+            self.when_all_players_ready()
+            connection_signal.disconnect(self._check_if_all_players_ready)
 
-
-    def log_decision_bookends(self, start_time, end_time, app, component, initial_decision):
+    def log_decision_bookends(self, start_time, end_time, initial_decision):
         """Insert dummy decisions into the database.
         
         This should be done once per group.
         This bookends the start and end of the period.
         """
         for player in self.group.get_players():
-            start_decision, end_decision = Decision(), Decision()
+            start_decision, end_decision = Event(), Event()
             for d in start_decision, end_decision:
-                d.app = app
-                d.component = component
                 d.session = self.session
                 d.subsession = self.subsession.name()
                 d.round = self.round_number
                 d.group = self.group.id_in_subsession
+                d.channel = 'decisions'
                 d.participant = player.participant
 
             start_decision.timestamp = start_time

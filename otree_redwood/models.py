@@ -1,18 +1,27 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from otree.db import models
+from channels import Group
 from django.utils import timezone
+from django.db.models import Manager
+import json
+from otree.db import models
 
 
-class Decision(models.Model):
+def group_key(session_code, subsession_number, round_number, group_number):
+    # Get a group key suitable for use with a Django channel Group.
+    return 'session-{}-subsession-{}-round-{}-group-{}'.format(
+        session_code,
+        subsession_number,
+        round_number,
+        group_number)
+
+
+class Event(models.Model):
 
     class Meta:
         app_label = "otree"
-        # If I don't set this, it could be in an unpredictable order
+        # Default to queries returning most recent Event first.
         ordering = ['-timestamp']
 
     timestamp = models.DateTimeField(null=False)
-    component = models.CharField(max_length=100, null=False)
     session = models.ForeignKey(
         'otree.Session',
         null=False,
@@ -20,35 +29,38 @@ class Decision(models.Model):
     subsession = models.IntegerField(null=True)
     round = models.IntegerField(null=False)
     group = models.IntegerField(null=False)
-    app = models.CharField(max_length=100, null=False)
-    participant = models.ForeignKey('otree.Participant', null=False)
-    value = models._JSONField()
-
-    def save(self, *args, **kwargs):
-        if self.timestamp is None:
-            self.timestamp = timezone.now()
-        super().save(*args, **kwargs)
-
-
-class RedwoodEvent(models.Model):
-
-    class Meta:
-        app_label = "otree"
-        # If I don't set this, it could be in an unpredictable order
-        ordering = ['-timestamp']
-
-    timestamp = models.DateTimeField(null=False)
-    component = models.CharField(max_length=100, null=False)
-    session = models.ForeignKey(
-        'otree.Session',
-        null=False,
+    channel = models.CharField(max_length=100, null=False)
+    participant = models.ForeignKey(
+        'otree.Participant',
         related_name='+')
-    subsession = models.IntegerField(null=True)
-    round = models.IntegerField(null=False)
-    group = models.IntegerField(null=False)
     value = models._JSONField()
 
+    @property
+    def message(self):
+        participant_code = None
+        if self.participant:
+            participant_code = self.participant.code
+        return {
+            'participant_code': participant_code,
+            'channel': self.channel,
+            'payload': self.value
+        }
+
     def save(self, *args, **kwargs):
+
+        create = False
+        if not self.pk:
+            create = True
         if self.timestamp is None:
             self.timestamp = timezone.now()
+
         super().save(*args, **kwargs)
+
+        if create:
+            Group(group_key(
+                self.session.code,
+                self.subsession,
+                self.round,
+                self.group)).send(
+                    {'text': json.dumps(self.message)},
+                    immediately=True)
