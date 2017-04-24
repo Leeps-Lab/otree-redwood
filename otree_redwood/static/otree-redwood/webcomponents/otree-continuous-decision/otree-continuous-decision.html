@@ -15,8 +15,9 @@
 	<template>
     	<otree-constants id="constants"></otree-constants>
     	<otree-channel
+    		id="decisionsChannel"
     		channel="decisions"
-    		data="{{ groupDecisions }}">
+    		on-event="_handleDecisionEvent">
 	    </otree-channel>
 	</template>
 
@@ -32,6 +33,7 @@
 					readonly: true,
 					notify: true,
 					observer: '_groupDecisionsChanged',
+					value: () => { return {} }
 				},
 				myDecision: {
 					type: Number,
@@ -46,15 +48,9 @@
 					computed: '_computeOtherDecision(groupDecisions.*)'
 				}
 			},
-			ready() {
-				this._path = (
-                    '/session/' + this.$.constants.session +
-                    '/app/' + this.$.constants.appName +
-                    '/subsession/' + this.$.constants.subsession +
-                    '/round/' + this.$.constants.round +
-                    '/group/' + this.$.constants.group +
-                    '/component/' + this.component +
-                    '/decisions');
+			_handleDecisionEvent(event) {
+				console.log(event.type);
+				console.log(event.detail);
 			},
 			_computeOtherDecision(groupDecisions) {
 				this.groupDecisions = this.groupDecisions || {};
@@ -80,8 +76,10 @@
 						newValue = 0.5;
 					}
 				}
-				this.groupDecisions = this.groupDecisions || {};
 				this.myDecision = parseFloat(newValue);
+
+				this.$.decisionsChannel.send(this.myDecision);
+
 				const pcode = this.$.constants.participantCode;
 				this.set(['groupDecisions', pcode], this.myDecision);
 			},

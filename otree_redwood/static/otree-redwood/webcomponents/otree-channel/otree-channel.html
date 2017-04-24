@@ -22,22 +22,15 @@
 			properties: {
 				channel: {
 					type: String
-				},
-				data: {
-					type: Object,
-					notify: true
 				}
 			},
-			observers: [
-				'_handleDataChange(data, data.*)'
-			],
 			_handleEvent(event) {
-				if (event.channel === this.channel) {
-					this.data = event;
+				if (event.detail.channel === this.channel) {
+					this.fire('event', event.detail.payload);
 				}
 			},
-			_handleDataChange() {
-				this.$.events.send(this.channel, this.data);
+			send(payload) {
+				this.$.events.send(this.channel, payload);
 			}
 		});
 	</script>

@@ -26,9 +26,11 @@
 			});
 		}
 
-		function onMessage(event) {
+		function onMessage(message) {
+			const event = JSON.parse(message.data);
+			console.log(event);
 			listeners.forEach(l => {
-				l.fire('event', event);
+				l.fire('event', event, {bubbles: false});
 			});
 		}
 
