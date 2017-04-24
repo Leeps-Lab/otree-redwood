@@ -1,17 +1,6 @@
-from channels import Group
 from django.utils import timezone
 from django.db.models import Manager
-import json
 from otree.db import models
-
-
-def group_key(session_code, subsession_number, round_number, group_number):
-    # Get a group key suitable for use with a Django channel Group.
-    return 'session-{}-subsession-{}-round-{}-group-{}'.format(
-        session_code,
-        subsession_number,
-        round_number,
-        group_number)
 
 
 class Event(models.Model):
@@ -47,20 +36,19 @@ class Event(models.Model):
         }
 
     def save(self, *args, **kwargs):
-
-        create = False
-        if not self.pk:
-            create = True
         if self.timestamp is None:
             self.timestamp = timezone.now()
 
         super().save(*args, **kwargs)
 
-        if create:
-            Group(group_key(
-                self.session.code,
-                self.subsession,
-                self.round,
-                self.group)).send(
-                    {'text': json.dumps(self.message)},
-                    immediately=True)
+
+class RanPlayersReadyFunction(models.Model):
+    class Meta:
+        app_label = "otree"
+        unique_together = ['page_index', 'session', 'id_in_subsession']
+        index_together = ['page_index', 'session', 'id_in_subsession']
+
+    page_index = models.PositiveIntegerField()
+    session = models.ForeignKey('otree.Session')
+    id_in_subsession = models.PositiveIntegerField(default=0)
+    ran = models.BooleanField(default=False)

@@ -19,6 +19,11 @@
     		channel="decisions"
     		on-event="_handleDecisionEvent">
 	    </otree-channel>
+    	<otree-channel
+    		id="groupDecisionsChannel"
+    		channel="group_decisions"
+    		on-event="_handleGroupDecisionsEvent">
+	    </otree-channel>
 	</template>
 
 	<script>
@@ -49,8 +54,14 @@
 				}
 			},
 			_handleDecisionEvent(event) {
-				console.log(event.type);
-				console.log(event.detail);
+				console.log('_handleDecisionEvent');
+				this.set(
+					['groupDecisions', event.detail.participant_code],
+					event.detail.payload);
+			},
+			_handleGroupDecisionsEvent(event) {
+				console.log('_handleGroupDecisionsEvent');
+				this.groupDecisions = event.detail.payload;
 			},
 			_computeOtherDecision(groupDecisions) {
 				this.groupDecisions = this.groupDecisions || {};
@@ -76,14 +87,14 @@
 						newValue = 0.5;
 					}
 				}
-				this.myDecision = parseFloat(newValue);
-
+				console.log('_myDecisionChanged');
 				this.$.decisionsChannel.send(this.myDecision);
 
 				const pcode = this.$.constants.participantCode;
 				this.set(['groupDecisions', pcode], this.myDecision);
 			},
 			_groupDecisionsChanged() {
+				console.log('_groupDecisionsChanged');
 				const pcode = this.$.constants.participantCode;
 				this.myDecision = this.groupDecisions[pcode];
 			}

@@ -26,7 +26,7 @@
 			},
 			_handleEvent(event) {
 				if (event.detail.channel === this.channel) {
-					this.fire('event', event.detail.payload);
+					this.fire('event', event.detail);
 				}
 			},
 			send(payload) {

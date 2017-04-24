@@ -32,8 +32,8 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires=[
-				'asgi_redis>=1.2.0,<2',
+        'asgi_redis>=1.2.0,<2',
         'channels>=1.1.3,<2',
-				'daphne>=1.0.0,<2'
+        'daphne>=1.0.0,<2'
     ]
 )
