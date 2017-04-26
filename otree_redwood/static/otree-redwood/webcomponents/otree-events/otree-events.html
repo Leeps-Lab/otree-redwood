@@ -1,0 +1,105 @@
+<link
+	rel="import"
+	href="/static/bower_components/polymer/polymer.html" />
+
+<link
+	rel="import" 
+	href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
+
+<dom-module id="otree-events">
+
+	<template>
+    	<otree-constants id="constants"></otree-constants>
+    	<p>Socket state: {{socket.readyState}}</p>
+	</template>
+
+	<script>
+		var socket = null;
+		var listeners = [];
+
+		function onError(error) {
+			listeners.forEach(l => {
+				l.onError(error);
+			});
+		}
+
+		function onClose(event) {
+			listeners.forEach(l => {
+				l.onClose(event);
+			});
+		}
+
+		function onOpen(event) {
+			listeners.forEach(l => {
+				l.onOpen(event);
+			});
+		}
+
+		function onMessage(message) {
+			const event = JSON.parse(message.data);
+			listeners.forEach(l => {
+				l.fire('event', event, {bubbles: false});
+			});
+		}
+
+		Polymer({
+			is: 'otree-events',
+			ready() {
+				if (socket === null) {
+					socket = new WebSocket(
+						'ws://' +
+						window.location.host +
+						'/otree/redwood' +
+						'/session/' + this.$.constants.session +
+						'/subsession/' + this.$.constants.subsession +
+						'/round/' + this.$.constants.round +
+						'/group/' + this.$.constants.group +
+						'/participant/' + this.$.constants.participantCode +
+						'/');
+					socket.onerror = onError;
+					socket.onopen = onOpen;
+					socket.onmessage = onMessage;
+					socket.onclose = onClose;
+				}
+				this.socket = socket;
+				this.pending = [];
+			},
+			attached() {
+				listeners.push(this);
+			},
+			detached() {
+				listeners.splice(listeners.indexOf(this), 1);
+			},
+			onOpen() {
+				this.pending.forEach(msg => {
+					this.socket.send(msg);
+				});
+				this.socket = null;
+				this.socket = socket;
+			},
+			onClose() {
+				console.error('socket closed');
+				this.socket = null;
+				this.socket = socket;
+			},
+			onError(err) {
+				console.error(err);
+				this.socket = null;
+				this.socket = socket;
+			},
+			send(channel, value) {
+				const msg = JSON.stringify({
+					'channel': channel,
+					'payload': value
+				});
+				if (this.socket.readyState != 1) {
+					console.log('not connected... pushing value onto pending stack');
+					this.pending.push(msg);
+					return;
+				}
+				this.socket.send(msg);
+			}
+		});
+	</script>
+
+</dom-module>

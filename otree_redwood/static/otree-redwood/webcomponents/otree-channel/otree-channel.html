@@ -1,0 +1,38 @@
+<link
+		rel="import"
+		href="/static/bower_components/polymer/polymer.html" />
+
+<link
+	rel="import" 
+	href="/static/otree-redwood/webcomponents/otree-events/otree-events.html">
+
+<dom-module id="otree-channel">
+
+	<template>
+		<otree-events
+			id="events"
+			on-event="_handleEvent">
+		</otree-channel>
+	</template>
+
+	<script>
+
+		Polymer({
+			is: 'otree-channel',
+			properties: {
+				channel: {
+					type: String
+				}
+			},
+			_handleEvent(event) {
+				if (event.detail.channel === this.channel) {
+					this.fire('event', event.detail);
+				}
+			},
+			send(payload) {
+				this.$.events.send(this.channel, payload);
+			}
+		});
+	</script>
+
+</dom-module>

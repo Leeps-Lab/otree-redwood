@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='otree-redwood',
-    version='0.1.0',
+    version='0.1.1',
     packages=find_packages(),
     include_package_data=True,
     license='MIT License',
@@ -32,6 +32,8 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires=[
-        'channel>=1,<2'
+        'asgi_redis>=1.2.0,<2',
+        'channels>=1.1.3,<2',
+        'daphne>=1.0.0,<2'
     ]
 )
