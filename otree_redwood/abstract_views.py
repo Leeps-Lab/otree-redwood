@@ -90,9 +90,9 @@ class ContinuousDecisionPage(Page):
         self._log_decision_bookends(start_time, end_time, 0.5)
 
     def _handle_decision_event(self, event):
-        print(event.participant.code, event.value)
-        self.group_decisions[event.participant.code] = event.value
-        consumers.send(self.group, 'group_decisions', self.group_decisions)
+        if event.value != None:
+            self.group_decisions[event.participant.code] = event.value
+            consumers.send(self.group, 'group_decisions', self.group_decisions)
 
     def before_next_page():
         consumers.unwatch(self._watcher)

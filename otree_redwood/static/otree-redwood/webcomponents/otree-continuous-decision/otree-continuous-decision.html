@@ -16,8 +16,7 @@
     	<otree-constants id="constants"></otree-constants>
     	<otree-channel
     		id="decisionsChannel"
-    		channel="decisions"
-    		on-event="_handleDecisionEvent">
+    		channel="decisions">
 	    </otree-channel>
     	<otree-channel
     		id="groupDecisionsChannel"
@@ -37,13 +36,12 @@
 					type: Object,
 					readonly: true,
 					notify: true,
-					observer: '_groupDecisionsChanged',
 					value: () => { return {} }
 				},
 				myDecision: {
 					type: Number,
-					observer: '_myDecisionChanged',
 					notify: true,
+					observer: '_myDecisionChanged',
 					value: 0.5
 				},
 				otherDecision: {
@@ -53,14 +51,7 @@
 					computed: '_computeOtherDecision(groupDecisions.*)'
 				}
 			},
-			_handleDecisionEvent(event) {
-				console.log('_handleDecisionEvent');
-				this.set(
-					['groupDecisions', event.detail.participant_code],
-					event.detail.payload);
-			},
 			_handleGroupDecisionsEvent(event) {
-				console.log('_handleGroupDecisionsEvent');
 				this.groupDecisions = event.detail.payload;
 			},
 			_computeOtherDecision(groupDecisions) {
@@ -68,7 +59,9 @@
 				const pcode = this.$.constants.participantCode;
 
 				// group decisions should have two entries maximum
-				console.assert (Object.keys(this.groupDecisions).length <= 2, "too many players in group decisions");
+				console.assert(
+					Object.keys(this.groupDecisions).length <= 2,
+					'too many players in group decisions');
 
 				for (let key in this.groupDecisions) {
                     if (key != pcode) {
@@ -79,24 +72,8 @@
                 // if no key for the other player is found, just default to 0.5
                 return 0.5;
 			},
-			_myDecisionChanged(newValue, oldValue) {
-				if (isNaN(newValue)) {
-					if (oldValue !== undefined)  {
-						newValue = oldValue;
-					} else {
-						newValue = 0.5;
-					}
-				}
-				console.log('_myDecisionChanged');
+			_myDecisionChanged() {
 				this.$.decisionsChannel.send(this.myDecision);
-
-				const pcode = this.$.constants.participantCode;
-				this.set(['groupDecisions', pcode], this.myDecision);
-			},
-			_groupDecisionsChanged() {
-				console.log('_groupDecisionsChanged');
-				const pcode = this.$.constants.participantCode;
-				this.myDecision = this.groupDecisions[pcode];
 			}
 		});
 	</script>

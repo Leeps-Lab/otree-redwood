@@ -17,16 +17,20 @@ def group_key(session_code, subsession_number, round_number, group_number):
         group_number)
 
 
+# TODO: Track event consumption time by channel and display it on a debug page.
 def consume_event(message):
     content = message.content
 
+    # TODO: Cache session objects by code for fast lookup.
     session = Session.objects.get(code=content['session_code'])
     subsession_number = int(content['subsession_number'])
     round_number = int(content['round_number'])
     group_number = int(content['group_number'])
     channel = content['channel']
+    # TODO: Cache participant objects by code for fast lookup.
     participant = Participant.objects.get(code=content['participant_code'])
 
+    # TODO: Look into saving events async in another thread.
     event = Event.objects.create(
         session=session,
         subsession=subsession_number,
@@ -43,7 +47,6 @@ def consume_event(message):
         group_number) + '-' + channel
     
     if channel_key in _watchers:
-        print('consume')
         _watchers[channel_key](event)
 
 
@@ -61,7 +64,7 @@ connected_participants = set()
 class EventConsumer(JsonWebsocketConsumer):
 
     # Set to True if you want it, else leave it out
-    strict_ordering = False
+    strict_ordering = True
 
     def connection_groups(self, **kwargs):
         """

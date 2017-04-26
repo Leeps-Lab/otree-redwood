@@ -10,6 +10,7 @@
 
 	<template>
     	<otree-constants id="constants"></otree-constants>
+    	<p>Socket state: {{socket.readyState}}</p>
 	</template>
 
 	<script>
@@ -17,12 +18,20 @@
 		var listeners = [];
 
 		function onError(error) {
-			console.error(error);
+			listeners.forEach(l => {
+				l.onError(error);
+			});
+		}
+
+		function onClose(event) {
+			listeners.forEach(l => {
+				l.onClose(event);
+			});
 		}
 
 		function onOpen(event) {
 			listeners.forEach(l => {
-				l.onOpen('open');
+				l.onOpen(event);
 			});
 		}
 
@@ -50,9 +59,10 @@
 					socket.onerror = onError;
 					socket.onopen = onOpen;
 					socket.onmessage = onMessage;
+					socket.onclose = onClose;
 				}
+				this.socket = socket;
 				this.pending = [];
-				this.connected = false;
 			},
 			attached() {
 				listeners.push(this);
@@ -61,21 +71,33 @@
 				listeners.splice(listeners.indexOf(this), 1);
 			},
 			onOpen() {
-				this.connected = true;
 				this.pending.forEach(msg => {
-					socket.send(msg);
+					this.socket.send(msg);
 				});
+				this.socket = null;
+				this.socket = socket;
+			},
+			onClose() {
+				console.error('socket closed');
+				this.socket = null;
+				this.socket = socket;
+			},
+			onError(err) {
+				console.error(err);
+				this.socket = null;
+				this.socket = socket;
 			},
 			send(channel, value) {
 				const msg = JSON.stringify({
 					'channel': channel,
 					'payload': value
 				});
-				if (!this.connected) {
+				if (this.socket.readyState != 1) {
+					console.log('not connected... pushing value onto pending stack');
 					this.pending.push(msg);
 					return;
 				}
-				socket.send(msg);
+				this.socket.send(msg);
 			}
 		});
 	</script>
