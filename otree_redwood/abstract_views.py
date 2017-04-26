@@ -6,6 +6,7 @@ import json
 import logging
 from otree.api import Page as oTreePage
 from otree.views.abstract import global_lock
+import time
 
 from otree_redwood import consumers
 from otree_redwood.models import Event, RanPlayersReadyFunction
@@ -55,6 +56,7 @@ class Page(oTreePage):
 
 
 class ContinuousDecisionPage(Page):
+    period_length = 360
 
     def __init__(self, *args, **kwargs):
         self.__class__.timeout_seconds = self.period_length + 10
@@ -78,7 +80,7 @@ class ContinuousDecisionPage(Page):
             else:
                 self.group_decisions[player.participant.code] = 0.5
 
-        self._watcher = consumers.watch(self.group, 'decisions', self._handle_decision_event)
+        self._watcher = consumers.watch(self.group, 'decisions', self.handle_decision_event)
 
         return result
 
@@ -89,13 +91,15 @@ class ContinuousDecisionPage(Page):
 
         self._log_decision_bookends(start_time, end_time, 0.5)
 
-    def _handle_decision_event(self, event):
+    def handle_decision_event(self, event):
         if event.value != None:
             self.group_decisions[event.participant.code] = event.value
             consumers.send(self.group, 'group_decisions', self.group_decisions)
 
     def before_next_page(self):
-        consumers.unwatch(self._watcher)
+        pass
+        # TODO: Unwatch so that the dictionary doesn't leak
+        # consumers.unwatch(self._watcher)
 
     def _log_decision_bookends(self, start_time, end_time, initial_decision):
         """Insert dummy decisions into the database.
@@ -120,3 +124,32 @@ class ContinuousDecisionPage(Page):
 
             start_decision.save()
             end_decision.save()
+
+
+_timers = {}
+class DiscreteEventMixin():
+    interval = 1
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.interval = float(self.interval)
+        self.intervals = self.period_length / self.interval
+        self.current_interval = 0
+        if self.group not in _emitters:
+            self.timer = threading.Timer(self.interval, self._tick)
+            _timers[self.group] = self.timer
+
+    def _tick(self):
+        start = time.time()
+
+    def tick(self):
+        pass
+
+    def when_all_players_ready(self):
+        super().when_all_players_ready()
+        if self.timer:
+            self.timer.start()
+
+    def before_next_page(self):
+        super().before_next_page()
+        del _timers[self.group]
