@@ -23,7 +23,7 @@ class Page(oTreePage):
         consumers.connection_signal.connect(self._check_if_all_players_ready)
         return result
 
-    def before_next_page():
+    def before_next_page(self):
         consumers.connection_signal.disconnect(self._check_if_all_players_ready)
 
     def when_all_players_ready(self):
@@ -93,6 +93,83 @@ class ContinuousDecisionPage(Page):
         if event.value != None:
             self.group_decisions[event.participant.code] = event.value
             consumers.send(self.group, 'group_decisions', self.group_decisions)
+
+    def before_next_page(self):
+        consumers.unwatch(self._watcher)
+
+    def _log_decision_bookends(self, start_time, end_time, initial_decision):
+        """Insert dummy decisions into the database.
+        
+        This should be done once per group.
+        This bookends the start and end of the period.
+        """
+        for player in self.group.get_players():
+            start_decision, end_decision = Event(), Event()
+            for d in start_decision, end_decision:
+                d.session = self.session
+                d.subsession = self.subsession.name()
+                d.round = self.round_number
+                d.group = self.group.id_in_subsession
+                d.channel = 'decisions'
+                d.participant = player.participant
+
+            start_decision.timestamp = start_time
+            start_decision.value = initial_decision
+            end_decision.timestamp = end_time
+            end_decision.value = None
+
+            start_decision.save()
+            end_decision.save()
+
+
+class DiscreteDecisionPage(Page):
+
+    def __init__(self, *args, **kwargs):
+        self.__class__.timeout_seconds = self.period_length + 10
+        super().__init__(*args, **kwargs)
+
+    def dispatch(self, *args, **kwargs):
+        # Dispatch to super first so that variables are available.
+        result = super().dispatch(*args, **kwargs)
+        self.group_decisions = {}
+        for player in self.group.get_players():
+            decisions = Event.objects.filter(
+                session=self.session,
+                subsession = self.subsession.name(),
+                round = self.round_number,
+                group = self.group.id_in_subsession,
+                channel = 'decisions',
+                participant = player.participant
+            )
+            if len(decisions) > 0:
+                self.group_decisions[player.participant.code] = decisions[0].value
+            else:
+                self.group_decisions[player.participant.code] = 0.5
+
+        self._watcher = consumers.watch(self.group, 'decisions', self._handle_decision_event)
+
+        return result
+
+    def when_all_players_ready(self):
+        # calculate start and end times for the period
+        start_time = timezone.now()
+        end_time = start_time + timedelta(seconds=self.period_length)
+
+        start_event, end_event = Event()
+        for e in start_event, end_event:
+            e.session = self.session
+            e.subsession = self.subsession.name()
+            e.round = self.round_number
+            e.group = self.group.id_in_subsession
+            e.channel = 'subperiods'
+        start_event.timestamp = start_time
+        end_event.timestamp = end_time
+        start_event.save()
+        end_event.save()
+
+    def _handle_decision_event(self, event):
+        if event.value != None:
+            self.group_decisions[event.participant.code] = event.value
 
     def before_next_page():
         consumers.unwatch(self._watcher)
