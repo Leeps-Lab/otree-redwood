@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db.models import Manager
+import otree
 from otree.db import models
 
 

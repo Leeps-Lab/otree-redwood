@@ -1,5 +1,6 @@
 from channels import Channel, Group
 from channels.generic.websockets import JsonWebsocketConsumer
+from django.core.cache import cache
 import django.dispatch
 import json
 from otree.models.session import Session
@@ -21,14 +22,18 @@ def group_key(session_code, subsession_number, round_number, group_number):
 def consume_event(message):
     content = message.content
 
-    # TODO: Cache session objects by code for fast lookup.
-    session = Session.objects.get(code=content['session_code'])
+    session = cache.get(content['session_code'])
+    if not session:
+        session = Session.objects.get(code=content['session_code'])
+        cache.set(content['session_code'], session)
     subsession_number = int(content['subsession_number'])
     round_number = int(content['round_number'])
     group_number = int(content['group_number'])
+    participant = cache.get(content['participant_code'])
+    if not participant:
+        participant = Participant.objects.get(code=content['participant_code'])
+        cache.set(content['participant_code'], participant)
     channel = content['channel']
-    # TODO: Cache participant objects by code for fast lookup.
-    participant = Participant.objects.get(code=content['participant_code'])
 
     # TODO: Look into saving events async in another thread.
     event = Event.objects.create(

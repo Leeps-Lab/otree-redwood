@@ -7,51 +7,37 @@ import vanilla
 from django.http import HttpResponse
 from django.core import serializers
 
-from otree_redwood.models import Decision
-from otree_redwood.firebase.ticks import collect_ticks
+from otree_redwood.models import Event
 
 
-class ExportTicks(vanilla.View):
+class ExportEvents(vanilla.View):
 
-    url_name = 'otree_redwood_export_ticks'
+    url_name = 'otree_redwood_export_events'
     url_pattern = '^{}/$'.format(url_name)
-    display_name = 'oTree-Redwood extension ticks file.'
-
-    def get(request, *args, **kwargs):
-
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-            'Ticks (accessed {}).csv'.format(
-                datetime.date.today().isoformat()
-            )
-        )
-
-        decisions = Decision.objects.order_by('timestamp').all()
-        header, ticks = collect_ticks(decisions)
-        w = csv.DictWriter(response, header)
-        w.writeheader()
-        w.writerows(ticks)
-
-        return response
-
-
-class ExportRawDecisions(vanilla.View):
-
-    url_name = 'otree_redwood_export_decisions'
-    url_pattern = '^{}/$'.format(url_name)
-    display_name = 'oTree-Redwood extension raw decisions file.'
+    display_name = 'oTree-Redwood extension raw events file.'
 
     def get(request, *args, **kwargs):
 
         response = HttpResponse(content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-            'Decision (accessed {}).json'.format(
+            'Events (accessed {}).json'.format(
                 datetime.date.today().isoformat()
             )
         )
 
-        decisions = Decision.objects.order_by('timestamp').all()
+        events = Event.objects.all()
 
-        response.write(serializers.serialize('json', decisions).encode('utf-8'))
+        response.write(serializers.serialize('json', events).encode('utf-8'))
 
         return response
+
+
+class DebugView(vanilla.TemplateView):
+
+    url_name = 'otree_redwood_export_events'
+    url_pattern = r"^redwood-debug/$"
+    template_name = 'otree_redwood/Debug.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
