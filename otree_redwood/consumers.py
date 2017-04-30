@@ -124,14 +124,8 @@ def watch(group, channel, callback):
 
 
 def unwatch(watcher):
-<<<<<<< HEAD
-    if not watcher:
-        return
-    del _watchers[watcher]
-=======
     if watcher in _watchers:
         del _watchers[watcher]
->>>>>>> builtin
 
 
 def send(group, channel, payload):
