@@ -10,7 +10,6 @@
 
 	<template>
     	<otree-constants id="constants"></otree-constants>
-    	<p>Socket state: {{socket.readyState}}</p>
 	</template>
 
 	<script>
@@ -74,18 +73,12 @@
 				this.pending.forEach(msg => {
 					this.socket.send(msg);
 				});
-				this.socket = null;
-				this.socket = socket;
 			},
 			onClose() {
 				console.error('socket closed');
-				this.socket = null;
-				this.socket = socket;
 			},
 			onError(err) {
 				console.error(err);
-				this.socket = null;
-				this.socket = socket;
 			},
 			send(channel, value) {
 				const msg = JSON.stringify({

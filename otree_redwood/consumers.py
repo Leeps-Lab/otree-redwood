@@ -123,7 +123,8 @@ def watch(group, channel, callback):
     return watcher 
 
 def unwatch(watcher):
-    del _watchers[watcher]
+    if watcher in _watchers:
+        del _watchers[watcher]
 
 def send(group, channel, payload):
     Group(group_key(

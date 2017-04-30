@@ -23,7 +23,7 @@ class Page(oTreePage):
         consumers.connection_signal.connect(self._check_if_all_players_ready)
         return result
 
-    def before_next_page():
+    def before_next_page(self):
         consumers.connection_signal.disconnect(self._check_if_all_players_ready)
 
     def when_all_players_ready(self):
@@ -59,6 +59,7 @@ class ContinuousDecisionPage(Page):
     def __init__(self, *args, **kwargs):
         self.__class__.timeout_seconds = self.period_length + 10
         super().__init__(*args, **kwargs)
+        self._watcher = None
 
     def dispatch(self, *args, **kwargs):
         # Dispatch to super first so that variables are available.
@@ -67,11 +68,11 @@ class ContinuousDecisionPage(Page):
         for player in self.group.get_players():
             decisions = Event.objects.filter(
                 session=self.session,
-                subsession = self.subsession.name(),
-                round = self.round_number,
-                group = self.group.id_in_subsession,
-                channel = 'decisions',
-                participant = player.participant
+                subsession= self.subsession.name(),
+                round=self.round_number,
+                group=self.group.id_in_subsession,
+                channel='decisions',
+                participant=player.participant
             )
             if len(decisions) > 0:
                 self.group_decisions[player.participant.code] = decisions[0].value
@@ -94,7 +95,7 @@ class ContinuousDecisionPage(Page):
             self.group_decisions[event.participant.code] = event.value
             consumers.send(self.group, 'group_decisions', self.group_decisions)
 
-    def before_next_page():
+    def before_next_page(self):
         consumers.unwatch(self._watcher)
 
     def _log_decision_bookends(self, start_time, end_time, initial_decision):
