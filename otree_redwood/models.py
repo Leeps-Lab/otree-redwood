@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db.models import Manager
+import otree
 from otree.db import models
 
 
@@ -43,12 +44,21 @@ class Event(models.Model):
 
 
 class RanPlayersReadyFunction(models.Model):
+    
     class Meta:
         app_label = "otree"
+        ordering = ['-timestamp']
         unique_together = ['page_index', 'session', 'id_in_subsession']
         index_together = ['page_index', 'session', 'id_in_subsession']
 
+    timestamp = models.DateTimeField(null=False)
     page_index = models.PositiveIntegerField()
     session = models.ForeignKey('otree.Session')
     id_in_subsession = models.PositiveIntegerField(default=0)
     ran = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.timestamp is None:
+            self.timestamp = timezone.now()
+
+        super().save(*args, **kwargs)

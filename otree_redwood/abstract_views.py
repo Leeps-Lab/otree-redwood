@@ -61,6 +61,7 @@ class ContinuousDecisionPage(Page):
     def __init__(self, *args, **kwargs):
         self.__class__.timeout_seconds = self.period_length + 10
         super().__init__(*args, **kwargs)
+        self._watcher = None
 
     def dispatch(self, *args, **kwargs):
         # Dispatch to super first so that variables are available.
@@ -69,11 +70,11 @@ class ContinuousDecisionPage(Page):
         for player in self.group.get_players():
             decisions = Event.objects.filter(
                 session=self.session,
-                subsession = self.subsession.name(),
-                round = self.round_number,
-                group = self.group.id_in_subsession,
-                channel = 'decisions',
-                participant = player.participant
+                subsession= self.subsession.name(),
+                round=self.round_number,
+                group=self.group.id_in_subsession,
+                channel='decisions',
+                participant=player.participant
             )
             if len(decisions) > 0:
                 self.group_decisions[player.participant.code] = decisions[0].value
