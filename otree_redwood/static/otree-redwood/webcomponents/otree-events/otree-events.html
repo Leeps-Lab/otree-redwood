@@ -46,11 +46,11 @@
 			ready() {
 				if (socket === null) {
 					let protocol = 'ws://';
-					if (window.location.protocol == "https:") {
+					if (window.location.protocol === 'https:') {
 						protocol = 'wss://';
 					}
 					socket = new WebSocket(
-						prococol +
+						protocol +
 						window.location.host +
 						'/otree/redwood' +
 						'/session/' + this.$.constants.session +
