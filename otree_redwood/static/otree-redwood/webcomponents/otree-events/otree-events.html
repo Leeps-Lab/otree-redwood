@@ -45,8 +45,12 @@
 			is: 'otree-events',
 			ready() {
 				if (socket === null) {
+					let protocol = 'ws://';
+					if (window.location.protocol == "https:") {
+						protocol = 'wss://';
+					}
 					socket = new WebSocket(
-						'ws://' +
+						prococol +
 						window.location.host +
 						'/otree/redwood' +
 						'/session/' + this.$.constants.session +
