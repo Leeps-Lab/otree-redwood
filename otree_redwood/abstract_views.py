@@ -6,6 +6,7 @@ import json
 import logging
 from otree.api import Page as oTreePage
 from otree.views.abstract import global_lock
+import threading
 import time
 
 from otree_redwood import consumers
@@ -137,29 +138,34 @@ class ContinuousDecisionPage(Page):
 
 
 _timers = {}
-class DiscreteEventMixin():
-    interval = 1
+class DiscreteEventEmitter():
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.interval = float(self.interval)
+    def __init__(self, interval, period_length, group, callback):
+        self.interval = float(interval)
+        self.period_length = period_length
+        self.group = group
         self.intervals = self.period_length / self.interval
+        self.callback = callback
         self.current_interval = 0
-        if self.group not in _emitters:
+        if self.group not in _timers:
             self.timer = threading.Timer(self.interval, self._tick)
             _timers[self.group] = self.timer
 
     def _tick(self):
         start = time.time()
+        self.callback(self.current_interval, self.intervals, self.group)
+        self.current_interval += 1
+        if self.current_interval < self.intervals:
+            self.timer = threading.Timer(self.interval, self._tick)
+            _timers[self.group] = self.timer
+            self.timer.start()
 
     def tick(self):
         pass
 
-    def when_all_players_ready(self):
-        super().when_all_players_ready()
+    def start(self):
         if self.timer:
             self.timer.start()
 
-    def before_next_page(self):
-        super().before_next_page()
+    def stop(self):
         del _timers[self.group]
