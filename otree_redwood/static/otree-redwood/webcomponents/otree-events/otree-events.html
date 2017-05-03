@@ -36,6 +36,15 @@
 
 		function onMessage(message) {
 			const event = JSON.parse(message.data);
+			if ('last_on_channel' in event) {
+				for (channel in event.last_on_channel) {
+					const msg = event.last_on_channel[channel];
+					listeners.forEach(l => {
+						l.fire('event', msg, {bubbles: false});
+					});
+				}
+				return;
+			}
 			listeners.forEach(l => {
 				l.fire('event', event, {bubbles: false});
 			});

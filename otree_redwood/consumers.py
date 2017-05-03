@@ -93,8 +93,7 @@ class EventConsumer(JsonWebsocketConsumer):
         last_on_channel = {}
         for event in history:
             last_on_channel[event.channel] = event.message
-        self.send(
-            {'text': json.dumps(last_on_channel)})
+        self.send({'last_on_channel': last_on_channel})
 
     def disconnect(self, message, **kwargs):
         connected_participants.remove(kwargs['participant_code'])

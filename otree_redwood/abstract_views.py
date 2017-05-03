@@ -52,6 +52,14 @@ class Page(oTreePage):
                 self.when_all_players_ready()
                 ready.ran = True
                 ready.save()
+                event = Event.objects.create(
+                    session=self.session,
+                    subsession=self.subsession.name(),
+                    round=self.round_number,
+                    group=self.group.id_in_subsession,
+                    channel='period_start',
+                    value=time.time())
+                consumers.send(self.group, 'period_start', event.value)
                 consumers.connection_signal.disconnect(self._check_if_all_players_ready)
 
 
@@ -93,6 +101,7 @@ class ContinuousDecisionPage(Page):
         self._log_decision_bookends(start_time, end_time, 0.5)
 
     def handle_decision_event(self, event):
+        # TODO: Probably want to ignore decisions that come in before the period_start signal is sent.
         if event.value != None:
             self.group_decisions[event.participant.code] = event.value
             consumers.send(self.group, 'group_decisions', self.group_decisions)

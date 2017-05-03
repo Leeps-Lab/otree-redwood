@@ -22,7 +22,8 @@ class Event(models.Model):
     channel = models.CharField(max_length=100, null=False)
     participant = models.ForeignKey(
         'otree.Participant',
-        related_name='+')
+        related_name='+',
+        null=True)
     value = models._JSONField()
 
     @property
