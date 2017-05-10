@@ -12,6 +12,7 @@
     	<otree-constants id="constants"></otree-constants>
 	</template>
 
+	<script src="/static/otree-redwood/js/debug.js"></script>
 	<script>
 		var socket = null;
 		var listeners = [];
@@ -39,12 +40,14 @@
 			if ('last_on_channel' in event) {
 				for (channel in event.last_on_channel) {
 					const msg = event.last_on_channel[channel];
+					debug.log(`last on channel: ${channel}\n${JSON.stringify(msg)}`);
 					listeners.forEach(l => {
 						l.fire('event', msg, {bubbles: false});
 					});
 				}
 				return;
 			}
+			debug.log(`received event on channel: ${event.channel}\n${JSON.stringify(event.payload)}`);
 			listeners.forEach(l => {
 				l.fire('event', event, {bubbles: false});
 			});
@@ -58,7 +61,7 @@
 					if (window.location.protocol === 'https:') {
 						protocol = 'wss://';
 					}
-					socket = new WebSocket(
+					socket = new ReconnectingWebSocket(
 						protocol +
 						window.location.host +
 						'/otree/redwood' +
@@ -67,7 +70,10 @@
 						'/round/' + this.$.constants.round +
 						'/group/' + this.$.constants.group +
 						'/participant/' + this.$.constants.participantCode +
-						'/');
+						'/', null, {
+							debug: true,
+							timeoutInterval: 10000
+						});
 					socket.onerror = onError;
 					socket.onopen = onOpen;
 					socket.onmessage = onMessage;
@@ -83,23 +89,25 @@
 				listeners.splice(listeners.indexOf(this), 1);
 			},
 			onOpen() {
+				debug.log('socket open');
 				this.pending.forEach(msg => {
 					this.socket.send(msg);
 				});
 			},
 			onClose() {
-				console.error('socket closed');
+				debug.error('socket closed');
 			},
 			onError(err) {
-				console.error(err);
+				debug.error(err);
 			},
 			send(channel, value) {
+				debug.log(`sending on channel ${channel}: ${value}`);
 				const msg = JSON.stringify({
 					'channel': channel,
 					'payload': value
 				});
 				if (this.socket.readyState != 1) {
-					console.log('not connected... pushing value onto pending stack');
+					debug.log('not connected... pushing value onto pending stack');
 					this.pending.push(msg);
 					return;
 				}

@@ -9,7 +9,7 @@ class Event(models.Model):
     class Meta:
         app_label = "otree"
         # Default to queries returning most recent Event first.
-        ordering = ['-timestamp']
+        ordering = ['timestamp']
 
     timestamp = models.DateTimeField(null=False)
     session = models.ForeignKey(

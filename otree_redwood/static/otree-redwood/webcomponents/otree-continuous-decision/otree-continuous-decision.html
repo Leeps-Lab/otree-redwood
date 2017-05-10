@@ -46,7 +46,7 @@
 					type: Number,
 					notify: true,
 					observer: '_myDecisionChanged',
-					value: 0.5
+					value: null
 				},
 				otherDecision: {
 					type: Number,
@@ -61,6 +61,10 @@
 			},
 			_handleGroupDecisionsEvent(event) {
 				this.groupDecisions = event.detail.payload;
+				if (this.myDecision === null) {
+					const pcode = this.$.constants.participantCode;
+					this.myDecision[pcode] = this.groupDecisions[pcode];
+				}
 			},
 			_computeOtherDecision(groupDecisions) {
 				this.groupDecisions = this.groupDecisions || {};
@@ -78,7 +82,7 @@
                 }
 
                 // if no key for the other player is found, just default to 0.5
-                return 0.5;
+                return null;
 			},
 			_myDecisionChanged() {
 				if (this.periodStartTime) {

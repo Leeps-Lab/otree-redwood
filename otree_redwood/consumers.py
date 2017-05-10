@@ -103,7 +103,7 @@ class EventConsumer(JsonWebsocketConsumer):
         # Stick the message onto the processing queue
         for (key, value) in kwargs.items():
             content[key] = value
-        Channel("otree.redwood.events").send(content)
+        Channel('otree.redwood.events').send(content)
 
 try:
     _watchers
@@ -128,6 +128,13 @@ def unwatch(watcher):
 
 
 def send(group, channel, payload):
+    Event.objects.create(
+        session=group.session,
+        subsession=group.subsession.id,
+        round=group.round_number,
+        group=group.id_in_subsession,
+        channel=channel,
+        value=payload)
     Group(group_key(
         group.session.code,
         group.subsession.id,
