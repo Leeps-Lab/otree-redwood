@@ -1,5 +1,6 @@
 from channels import Group
 from django.db.models.signals import post_save
+from django.http.response import HttpResponseRedirect
 from django.utils import timezone
 from datetime import timedelta
 import json
@@ -19,9 +20,10 @@ class Page(oTreePage):
     subjects in the Page.
     """
 
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         # Dispatch to super first so that variables are available.
-        result = super().dispatch(*args, **kwargs)
+        result = super().dispatch(request, *args, **kwargs)
+        self._page_index = kwargs['page_index']
         consumers.connection_signal.connect(self._check_if_all_players_ready)
         return result
 
@@ -38,30 +40,30 @@ class Page(oTreePage):
         with global_lock():
             try:
                 ready = RanPlayersReadyFunction.objects.get(
-                    page_index=self._index_in_pages,
+                    page_index=self._page_index,
                     id_in_subsession=self.group.id_in_subsession,
                     session=self.session
                 )
             except RanPlayersReadyFunction.DoesNotExist:
                 ready = RanPlayersReadyFunction.objects.create(
-                    page_index=self._index_in_pages,
+                    page_index=self._page_index,
                     id_in_subsession=self.group.id_in_subsession,
                     session=self.session
                 )
-            group_participants = set([player.participant.code for player in self.group.get_players()])
-            if group_participants.issubset(consumers.connected_participants) and not ready.ran:
-                self.when_all_players_ready()
-                ready.ran = True
-                ready.save()
-                event = Event.objects.create(
-                    session=self.session,
-                    subsession=self.subsession.name(),
-                    round=self.round_number,
-                    group=self.group.id_in_subsession,
-                    channel='period_start',
-                    value=time.time())
-                consumers.send(self.group, 'period_start', event.value)
-                consumers.connection_signal.disconnect(self._check_if_all_players_ready)
+        group_participants = set([player.participant.code for player in self.group.get_players()])
+        if group_participants.issubset(consumers.connected_participants) and not ready.ran:
+            self.when_all_players_ready()
+            ready.ran = True
+            ready.save()
+            event = Event.objects.create(
+                session=self.session,
+                subsession=self.subsession.name(),
+                round=self.round_number,
+                group=self.group.id_in_subsession,
+                channel='period_start',
+                value=time.time())
+            consumers.send(self.group, 'period_start', event.value)
+            consumers.connection_signal.disconnect(self._check_if_all_players_ready)
 
 
 class ContinuousDecisionPage(Page):
@@ -72,9 +74,15 @@ class ContinuousDecisionPage(Page):
         super().__init__(*args, **kwargs)
         self._watcher = None
 
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         # Dispatch to super first so that variables are available.
-        result = super().dispatch(*args, **kwargs)
+        result = super().dispatch(request, *args, **kwargs)
+        # All pages get visited twice - the second time to force a redirect.
+        # in which case no attributes get set and the participant is moving
+        # on to the next page.
+        if isinstance(result, HttpResponseRedirect):
+            return result
+
         self.group_decisions = {}
         for player in self.group.get_players():
             decisions = Event.objects.filter(
@@ -88,7 +96,7 @@ class ContinuousDecisionPage(Page):
             if len(decisions) > 0:
                 self.group_decisions[player.participant.code] = decisions[0].value
             else:
-                self.group_decisions[player.participant.code] = 0.5
+                self.group_decisions[player.participant.code] = self.initial_decision
 
         self._watcher = consumers.watch(self.group, 'decisions', self.handle_decision_event)
 
@@ -99,7 +107,7 @@ class ContinuousDecisionPage(Page):
         start_time = timezone.now()
         end_time = start_time + timedelta(seconds=self.period_length)
 
-        self._log_decision_bookends(start_time, end_time, 0.5)
+        self._log_decision_bookends(start_time, end_time)
 
     def handle_decision_event(self, event):
         # TODO: Probably want to ignore decisions that come in before the period_start signal is sent.
@@ -112,7 +120,7 @@ class ContinuousDecisionPage(Page):
         # TODO: Unwatch so that the dictionary doesn't leak
         # consumers.unwatch(self._watcher)
 
-    def _log_decision_bookends(self, start_time, end_time, initial_decision):
+    def _log_decision_bookends(self, start_time, end_time):
         """Insert dummy decisions into the database.
         
         This should be done once per group.
@@ -129,7 +137,7 @@ class ContinuousDecisionPage(Page):
                 d.participant = player.participant
 
             start_decision.timestamp = start_time
-            start_decision.value = initial_decision
+            start_decision.value = self.initial_decision
             end_decision.timestamp = end_time
             end_decision.value = None
 
