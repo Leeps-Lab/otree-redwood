@@ -23,7 +23,7 @@ def consume_event(message):
     content = message.content
     channel = content['channel']
 
-    with track(channel):
+    with track('channel=' + channel):
         with track('trying to fetch session from cache') as obs:
             session = cache.get(content['session_code'])
             if not session:

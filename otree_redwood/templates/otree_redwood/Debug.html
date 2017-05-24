@@ -2,9 +2,31 @@
 
 {% block content %}
 
-<p>{{ contexts }}</p>
+<table>
+	<tr>
+		<th>Context</th>
+		<th>Time (ms)</th>
+	</tr>
+	{% for k, v in contexts.items %}
+		<tr>
+			<td>{{ k }}</td>
+			<td>{% widthratio v 1 1000 %}</td>
+		</tr>
+	{% endfor %}
+</table>
 
-<p>{{ fields }}</p>
+<table>
+	<tr>
+		<th>Variable</th>
+		<th>Count</th>
+	</tr>
+	{% for k, v in fields.items %}
+		<tr>
+			<td>{{ k }}</td>
+			<td>{{ v }}</td>
+		</tr>
+	{% endfor %}
+</table>
 
 <p>{{ connected_participants }}</p>
 

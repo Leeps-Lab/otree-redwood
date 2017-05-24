@@ -46,6 +46,6 @@ class DebugView(vanilla.TemplateView):
         for key, values in stats.observations.items():
             mean = sum(values) / len(values)
             context['contexts'][key] = mean
-        context['fields'] = stats.fields
+        context['fields'] = dict(stats.fields)
         context['connected_participants'] = consumers.connected_participants
         return context
