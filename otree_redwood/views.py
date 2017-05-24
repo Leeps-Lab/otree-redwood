@@ -1,12 +1,14 @@
 import csv
 import datetime
 import functools
+import math
 import operator
 import vanilla
 
 from django.http import HttpResponse
 from django.core import serializers
 
+from otree_redwood import consumers, stats
 from otree_redwood.models import Event
 
 
@@ -40,4 +42,10 @@ class DebugView(vanilla.TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['contexts'] = {}
+        for key, values in stats.observations.items():
+            mean = sum(values) / len(values)
+            context['contexts'][key] = mean
+        context['fields'] = stats.fields
+        context['connected_participants'] = consumers.connected_participants
         return context
