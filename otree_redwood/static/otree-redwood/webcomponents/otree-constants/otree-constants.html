@@ -26,6 +26,7 @@
 		var participantCode = undefined;
 		var appName = undefined;
 		var idInGroup = undefined;
+		var debug = undefined;
 
 		Polymer({
 			is: 'otree-constants',
@@ -102,6 +103,15 @@
 					readonly: true,
 					value: () => {
 						return oTree.idInGroup;
+					}
+				},
+				/** True if the DEBUG environment variable is set. */
+				debug: {
+					type: Boolean,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.debug;
 					}
 				}
 			}

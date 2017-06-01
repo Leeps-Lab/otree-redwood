@@ -24,7 +24,7 @@ def consume_event(message):
     content = message.content
     channel = content['channel']
 
-    with track('channel=' + channel):
+    with track('recv_channel=' + channel):
         with track('trying to fetch session from cache') as obs:
             session = cache.get(content['session_code'])
             if not session:
@@ -99,15 +99,7 @@ class EventConsumer(JsonWebsocketConsumer):
     def connect(self, message, **kwargs):
         connected_participants.add(kwargs['participant_code'])
         connection_signal.send(self, **kwargs)
-        history = Event.objects.filter(
-            session__code=kwargs['session_code'],
-            subsession=kwargs['subsession_number'],
-            round=kwargs['round_number'],
-            group=kwargs['group_number'])
-        last_on_channel = {}
-        for event in history:
-            last_on_channel[event.channel] = event.message
-        self.send({'last_on_channel': last_on_channel})
+        self.message.reply_channel.send({'accept': True})
 
     def disconnect(self, message, **kwargs):
         connected_participants.remove(kwargs['participant_code'])
@@ -118,9 +110,12 @@ class EventConsumer(JsonWebsocketConsumer):
         for (key, value) in kwargs.items():
             content[key] = value
         if content['channel'] == 'echo':
+            payload = None
+            if 'payload' in content:
+                payload = content['payload']
             self.send({
                 'channel': 'echo',
-                'payload': content['payload']
+                'payload': payload
             })
             return
         Channel('otree.redwood.events').send(content)
@@ -149,19 +144,20 @@ def unwatch(watcher):
 
 
 def send(group, channel, payload):
-    '''Event.objects.create(
-        session=group.session,
-        subsession=group.subsession.id,
-        round=group.round_number,
-        group=group.id_in_subsession,
-        channel=channel,
-        value=payload)'''
-    Group(group_key(
-        group.session.code,
-        group.subsession.id,
-        group.round_number,
-        group.id_in_subsession)).send(
-            {'text': json.dumps({
-                'channel': channel,
-                'payload': payload
-            })})
+    with track('send_channel=' + channel):
+        Event.objects.create(
+            session=group.session,
+            subsession=group.subsession.id,
+            round=group.round_number,
+            group=group.id_in_subsession,
+            channel=channel,
+            value=payload)
+        Group(group_key(
+            group.session.code,
+            group.subsession.id,
+            group.round_number,
+            group.id_in_subsession)).send(
+                {'text': json.dumps({
+                    'channel': channel,
+                    'payload': payload
+                })})
