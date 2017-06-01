@@ -47,7 +47,9 @@
 				}
 				return;
 			}
-			debug.log(`received event on channel: ${event.channel}\n${JSON.stringify(event.payload)}`);
+			if (this.debug) {
+				debug.log(`received event on channel: ${event.channel}\n${JSON.stringify(event.payload)}`);
+			}
 			listeners.forEach(l => {
 				l.fire('event', event, {bubbles: false});
 			});
@@ -55,6 +57,14 @@
 
 		Polymer({
 			is: 'otree-events',
+			properties: {
+				debug: {
+					type: Boolean,
+					value: () => {
+						return window.location.search.includes('debug=true');
+					} 
+				}
+			},
 			ready() {
 				if (socket === null) {
 					let protocol = 'ws://';
@@ -71,7 +81,7 @@
 						'/group/' + this.$.constants.group +
 						'/participant/' + this.$.constants.participantCode +
 						'/', null, {
-							debug: true,
+							debug: this.debug,
 							timeoutInterval: 10000
 						});
 					socket.onerror = onError;
@@ -89,25 +99,35 @@
 				listeners.splice(listeners.indexOf(this), 1);
 			},
 			onOpen() {
-				debug.log('socket open');
+				if (this.debug) {
+					debug.log('socket open');
+				}
 				this.pending.forEach(msg => {
 					this.socket.send(msg);
 				});
 			},
 			onClose() {
-				debug.error('socket closed');
+				if (this.debug) {
+					debug.error('socket closed');
+				}
 			},
 			onError(err) {
-				debug.error(err);
+				if (this.debug) {
+					debug.error(err);
+				}
 			},
 			send(channel, value) {
-				debug.log(`sending on channel ${channel}: ${value}`);
+				if (this.debug) {
+					debug.log(`sending on channel ${channel}: ${value}`);
+				}
 				const msg = JSON.stringify({
 					'channel': channel,
 					'payload': value
 				});
 				if (this.socket.readyState != 1) {
-					debug.log('not connected... pushing value onto pending stack');
+					if (this.debug) {
+						debug.log('not connected... pushing value onto pending stack');
+					}
 					this.pending.push(msg);
 					return;
 				}
