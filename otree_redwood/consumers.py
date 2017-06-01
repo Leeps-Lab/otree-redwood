@@ -3,6 +3,7 @@ from channels.generic.websockets import JsonWebsocketConsumer
 from django.core.cache import cache
 import django.dispatch
 import json
+import time
 from otree.models.session import Session
 from otree.models.participant import Participant
 
@@ -116,6 +117,12 @@ class EventConsumer(JsonWebsocketConsumer):
         # Stick the message onto the processing queue
         for (key, value) in kwargs.items():
             content[key] = value
+        if content['channel'] == 'echo':
+            self.send({
+                'channel': 'echo',
+                'payload': content['payload']
+            })
+            return
         Channel('otree.redwood.events').send(content)
 
 
@@ -142,13 +149,13 @@ def unwatch(watcher):
 
 
 def send(group, channel, payload):
-    Event.objects.create(
+    '''Event.objects.create(
         session=group.session,
         subsession=group.subsession.id,
         round=group.round_number,
         group=group.id_in_subsession,
         channel=channel,
-        value=payload)
+        value=payload)'''
     Group(group_key(
         group.session.code,
         group.subsession.id,

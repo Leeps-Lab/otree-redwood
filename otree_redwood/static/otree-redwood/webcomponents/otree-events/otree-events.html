@@ -9,64 +9,61 @@
 <dom-module id="otree-events">
 
 	<template>
+			<style>
+				#debug {
+					position: absolute;
+					top: 10px;
+					left: 10px;
+				}
+			</style>
     	<otree-constants id="constants"></otree-constants>
+    	<template is="dom-if" if="[[master]]">
+    		<template is="dom-if" if="[[debug]]">
+		    	<div id="debug">
+		    		<p>Connected: [[connectionStatus]]</p>
+		    		<p>Ping: [[avgPingTime]]</p>
+		    	</div>
+	    	</template>
+    	</template>
 	</template>
 
-	<script src="/static/otree-redwood/js/debug.js"></script>
 	<script>
 		var socket = null;
 		var listeners = [];
 
-		function onError(error) {
-			listeners.forEach(l => {
-				l.onError(error);
-			});
-		}
-
-		function onClose(event) {
-			listeners.forEach(l => {
-				l.onClose(event);
-			});
-		}
-
-		function onOpen(event) {
-			listeners.forEach(l => {
-				l.onOpen(event);
-			});
-		}
-
-		function onMessage(message) {
-			const event = JSON.parse(message.data);
-			if ('last_on_channel' in event) {
-				for (channel in event.last_on_channel) {
-					const msg = event.last_on_channel[channel];
-					debug.log(`last on channel: ${channel}\n${JSON.stringify(msg)}`);
-					listeners.forEach(l => {
-						l.fire('event', msg, {bubbles: false});
-					});
-				}
-				return;
-			}
-			if (this.debug) {
-				debug.log(`received event on channel: ${event.channel}\n${JSON.stringify(event.payload)}`);
-			}
-			listeners.forEach(l => {
-				l.fire('event', event, {bubbles: false});
-			});
-		}
-
 		Polymer({
 			is: 'otree-events',
 			properties: {
+				master: {
+					type: Boolean,
+					value: false
+				},
 				debug: {
 					type: Boolean,
 					value: () => {
 						return window.location.search.includes('debug=true');
-					} 
+					}
+				},
+				pings: {
+					type: Object,
+					value: () => { return {} }
+				},
+				roundTripTimes: {
+					type: Array,
+					value: () => { return [] }
+				},
+				avgPingTime: {
+					type: Number,
+					computed: '_computeAvgPingTime(roundTripTimes.*)'
+				},
+				connectionStatus: {
+					type: String,
+					computed: '_computeConnectionStatus(socket.*, roundTripTimes.*)'
 				}
 			},
 			ready() {
 				if (socket === null) {
+					this.master = true;
 					let protocol = 'ws://';
 					if (window.location.protocol === 'https:') {
 						protocol = 'wss://';
@@ -84,10 +81,10 @@
 							debug: this.debug,
 							timeoutInterval: 10000
 						});
-					socket.onerror = onError;
-					socket.onopen = onOpen;
-					socket.onmessage = onMessage;
-					socket.onclose = onClose;
+					socket.onerror = this.onError.bind(this);
+					socket.onopen = this.onOpen.bind(this);
+					socket.onmessage = this.onMessage.bind(this);
+					socket.onclose = this.onClose.bind(this);
 				}
 				this.socket = socket;
 				this.pending = [];
@@ -99,39 +96,81 @@
 				listeners.splice(listeners.indexOf(this), 1);
 			},
 			onOpen() {
-				if (this.debug) {
-					debug.log('socket open');
-				}
-				this.pending.forEach(msg => {
-					this.socket.send(msg);
+				this.socket = socket;
+				listeners.forEach(l => {
+					l.pending.forEach(msg => {
+						socket.send(msg);
+					});
 				});
+				if (this.debug) {
+					this.sendPing();
+				}
 			},
 			onClose() {
-				if (this.debug) {
-					debug.error('socket closed');
-				}
+				this.socket = socket;
 			},
 			onError(err) {
-				if (this.debug) {
-					debug.error(err);
+				this.socket = socket;
+				console.error(err);
+			},
+			onMessage(message) {
+				this.socket = socket;
+				const event = JSON.parse(message.data);
+				if ('last_on_channel' in event) {
+					for (channel in event.last_on_channel) {
+						const msg = event.last_on_channel[channel];
+						listeners.forEach(l => {
+							l.fire('event', msg, {bubbles: false});
+						});
+					}
+					return;
 				}
+				if (event.channel == 'echo') {
+					const rtt = Date.now() - this.pings[event.payload];
+					this.push('roundTripTimes', rtt);
+					delete this.pings[event.payload];
+					return;
+				}
+				listeners.forEach(l => {
+					l.fire('event', event, {bubbles: false});
+				});
+			},
+			sendPing() {
+				this.socket = socket;
+				if (socket.readyState == 1) {
+					const msgID = Math.floor(Math.random() * 1e10);
+					socket.send(JSON.stringify({
+						'channel': 'echo',
+						'payload': msgID
+					}));
+					this.pings[msgID] = Date.now();
+				}
+				window.setTimeout(this.sendPing.bind(this), 1000);
+			},
+			_computeAvgPingTime() {
+				if (this.roundTripTimes.length == 0) {
+					return NaN;
+				}
+				return Math.floor(
+					this.roundTripTimes.reduce((acc, val) => { return acc + val; }, 0) / 
+					this.roundTripTimes.length);
+			},
+			_computeConnectionStatus() {
+				if (this.socket.readyState == 1) {
+					return 'connected';
+				}
+				return 'not connected';
 			},
 			send(channel, value) {
-				if (this.debug) {
-					debug.log(`sending on channel ${channel}: ${value}`);
-				}
 				const msg = JSON.stringify({
 					'channel': channel,
 					'payload': value
 				});
-				if (this.socket.readyState != 1) {
-					if (this.debug) {
-						debug.log('not connected... pushing value onto pending stack');
-					}
+				if (socket.readyState != 1) {
 					this.pending.push(msg);
 					return;
 				}
-				this.socket.send(msg);
+				socket.send(msg);
 			}
 		});
 	</script>

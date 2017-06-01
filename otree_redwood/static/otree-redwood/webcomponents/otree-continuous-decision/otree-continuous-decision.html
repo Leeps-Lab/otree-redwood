@@ -63,7 +63,7 @@
 				this.groupDecisions = event.detail.payload;
 				if (this.myDecision === null) {
 					const pcode = this.$.constants.participantCode;
-					this.myDecision[pcode] = this.groupDecisions[pcode];
+					this.myDecision = this.groupDecisions[pcode];
 				}
 			},
 			_computeOtherDecision(groupDecisions) {
