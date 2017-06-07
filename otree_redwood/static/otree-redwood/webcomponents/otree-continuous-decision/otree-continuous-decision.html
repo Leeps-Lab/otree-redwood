@@ -53,10 +53,6 @@
 					readonly: true,
 					notify: true,
 					computed: '_computeOtherDecision(groupDecisions.*)'
-				},
-				periodStartTime: {
-					type: Number,
-					value: null
 				}
 			},
 			_handleGroupDecisionsEvent(event) {
@@ -85,12 +81,7 @@
                 return null;
 			},
 			_myDecisionChanged() {
-				if (this.periodStartTime) {
-					this.$.decisionsChannel.send(this.myDecision);
-				}
-			},
-			_handlePeriodStartEvents(event) {
-				this.periodStartTime = event.detail.payload;
+				this.$.decisionsChannel.send(this.myDecision);
 			}
 		});
 	</script>

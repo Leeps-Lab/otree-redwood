@@ -97,9 +97,9 @@ class EventConsumer(JsonWebsocketConsumer):
             kwargs['group_number'])]
 
     def connect(self, message, **kwargs):
+        self.message.reply_channel.send({'accept': True})
         connected_participants.add(kwargs['participant_code'])
         connection_signal.send(self, **kwargs)
-        self.message.reply_channel.send({'accept': True})
 
     def disconnect(self, message, **kwargs):
         connected_participants.remove(kwargs['participant_code'])

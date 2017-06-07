@@ -62,7 +62,6 @@ class Page(oTreePage):
                 group=self.group.id_in_subsession,
                 channel='period_start',
                 value=time.time())
-            consumers.send(self.group, 'period_start', event.value)
             consumers.connection_signal.disconnect(self._check_if_all_players_ready)
 
 
