@@ -11,7 +11,7 @@ import threading
 import time
 
 from otree_redwood import consumers
-from otree_redwood.models import Event, RanPlayersReadyFunction
+from otree_redwood.models import Event, Connection, RanPlayersReadyFunction
 
 
 class Page(oTreePage):
@@ -50,8 +50,12 @@ class Page(oTreePage):
                     id_in_subsession=self.group.id_in_subsession,
                     session=self.session
                 )
-        group_participants = set([player.participant.code for player in self.group.get_players()])
-        if group_participants.issubset(consumers.connected_participants) and not ready.ran:
+            for player in self.group.get_players():
+                try:
+                    connections.append(Connection.objects.get(participant_code=player.participant.code))
+                except Connection.DoesNotExist:
+                    return
+                    
             self.when_all_players_ready()
             ready.ran = True
             ready.save()

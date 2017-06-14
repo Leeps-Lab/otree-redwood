@@ -63,3 +63,11 @@ class RanPlayersReadyFunction(models.Model):
             self.timestamp = timezone.now()
 
         super().save(*args, **kwargs)
+
+
+class Connection(models.Model):
+
+    class Meta:
+        app_label = "otree"
+
+    participant_code = models.CharField(max_length=10, null=False)

@@ -7,7 +7,7 @@ import time
 from otree.models.session import Session
 from otree.models.participant import Participant
 
-from otree_redwood.models import Event
+from otree_redwood.models import Event, Connection
 from otree_redwood.stats import track 
 
 
@@ -77,9 +77,6 @@ connection_signal = django.dispatch.Signal(providing_args=[
 ])
 
 
-connected_participants = set()
-
-
 class EventConsumer(JsonWebsocketConsumer):
 
     # Set to True if you want it, else leave it out
@@ -98,11 +95,16 @@ class EventConsumer(JsonWebsocketConsumer):
 
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
-        connected_participants.add(kwargs['participant_code'])
+        Connection.objects.create(
+            participant_code=kwargs['participant_code'],
+        )
         connection_signal.send(self, **kwargs)
 
     def disconnect(self, message, **kwargs):
-        connected_participants.remove(kwargs['participant_code'])
+        try:
+            Connection.objects.get(participant_code=kwargs['participant_code']).delete()
+        except Connection.DoesNotExist:
+            pass
         connection_signal.send(self, **kwargs)
 
     def receive(self, content, **kwargs):

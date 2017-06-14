@@ -47,5 +47,5 @@ class DebugView(vanilla.TemplateView):
             mean = sum(values) / len(values)
             context['contexts'][key] = mean
         context['fields'] = dict(stats.fields)
-        context['connected_participants'] = consumers.connected_participants
+        context['connected_participants'] = consumers.get_connected_participants()
         return context
