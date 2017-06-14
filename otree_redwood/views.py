@@ -10,6 +10,7 @@ from django.core import serializers
 
 from otree_redwood import consumers, stats
 from otree_redwood.models import Event
+from otree_redwood.abstract_views import output_functions
 
 
 class ExportEvents(vanilla.View):
@@ -19,6 +20,11 @@ class ExportEvents(vanilla.View):
     display_name = 'oTree-Redwood extension raw events file.'
 
     def get(request, *args, **kwargs):
+
+        for f in output_functions:
+            f()
+
+        return HttpResponse(content_type='text/html')
 
         response = HttpResponse(content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(
