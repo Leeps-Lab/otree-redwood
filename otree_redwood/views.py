@@ -8,6 +8,7 @@ import vanilla
 from django.http import HttpResponse
 from django.core import serializers
 
+from otree.models import Session
 from otree_redwood import consumers, stats
 from otree_redwood.models import Event
 from otree_redwood.abstract_views import output_functions
@@ -21,21 +22,35 @@ class ExportEvents(vanilla.View):
 
     def get(request, *args, **kwargs):
 
-        for f in output_functions:
-            f()
+        apps = []
+        for f, app in output_functions:
+            sessions = []
+            for session in Session.objects.all():
+                if app in session.config['app_sequence']:
+                    sessions.append(session)
+            for session in sessions:
+                apps.append({
+                    'session': session.code,
+                    'app': app,
+                    'table': f(Event.objects.filter(session=session)),
+                })
 
-        return HttpResponse(content_type='text/html')
-
-        response = HttpResponse(content_type='application/json')
+        response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-            'Events (accessed {}).json'.format(
+            'Redwood Events (accessed {}).csv'.format(
                 datetime.date.today().isoformat()
             )
         )
 
-        events = Event.objects.all()
-
-        response.write(serializers.serialize('json', events).encode('utf-8'))
+        w = csv.writer(response)
+        for app in apps:
+            w.writerow(['app', 'session'])
+            w.writerow([app['app'], app['session']])
+            header = set()
+            for row in app['table']:
+                header.add(row.keys())
+            for row in app['table']:
+                w.writerow([row[col] for col in header])
 
         return response
 

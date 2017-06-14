@@ -52,7 +52,7 @@ class Page(oTreePage):
                 )
             for player in self.group.get_players():
                 try:
-                    connections.append(Connection.objects.get(participant_code=player.participant.code))
+                    Connection.objects.get(participant_code=player.participant.code)
                 except Connection.DoesNotExist:
                     return
                     
@@ -149,9 +149,11 @@ class ContinuousDecisionPage(Page):
 
 
 output_functions = []
-def output_table(f):
-    output_functions.append(lambda: f(Event.objects.all()))
-    return output_functions[-1]
+def output_table(app=None):
+    def _output_table(f):
+        output_functions.append((f, app))
+        return f
+    return _output_table
 
 
 _timers = {}
@@ -167,6 +169,8 @@ class DiscreteEventEmitter():
         if self.group not in _timers:
             self.timer = threading.Timer(self.interval, self._tick)
             _timers[self.group] = self.timer
+        else:
+            self.timer = None
 
     def _tick(self):
         start = time.time()
