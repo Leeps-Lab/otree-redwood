@@ -148,6 +148,12 @@ class ContinuousDecisionPage(Page):
             end_decision.save()
 
 
+output_functions = []
+def output_table(f):
+    output_functions.append(lambda: f(Event.objects.all()))
+    return output_functions[-1]
+
+
 _timers = {}
 class DiscreteEventEmitter():
 
