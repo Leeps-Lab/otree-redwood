@@ -50,6 +50,8 @@ class Page(oTreePage):
                     id_in_subsession=self.group.id_in_subsession,
                     session=self.session
                 )
+            if ready.ran:
+                return
             for player in self.group.get_players():
                 try:
                     Connection.objects.get(participant_code=player.participant.code)
