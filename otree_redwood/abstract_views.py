@@ -53,7 +53,7 @@ class Page(oTreePage):
             if ready.ran:
                 return
             for player in self.group.get_players():
-                if Connection.objects.count(participant_code=player.participant.code) == 0:
+                if Connection.objects.filter(participant_code=player.participant.code).count() == 0:
                     return
                     
             self.when_all_players_ready()
