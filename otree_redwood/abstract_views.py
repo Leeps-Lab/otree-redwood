@@ -51,9 +51,7 @@ class Page(oTreePage):
                     session=self.session
                 )
             for player in self.group.get_players():
-                try:
-                    Connection.objects.get(participant_code=player.participant.code)
-                except Connection.DoesNotExist:
+                if Connection.objects.count(participant_code=player.participant.code) == 0:
                     return
                     
             self.when_all_players_ready()
