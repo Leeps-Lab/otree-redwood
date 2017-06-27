@@ -1,5 +1,5 @@
 from channels import Channel, Group
-from channels.generic.websockets import JsonWebsocketConsumer
+from channels.generic.websockets import WebsocketConsumer
 from django.core.cache import cache
 import django.dispatch
 import json
@@ -77,7 +77,7 @@ connection_signal = django.dispatch.Signal(providing_args=[
 ])
 
 
-class EventConsumer(JsonWebsocketConsumer):
+class EventConsumer(WebsocketConsumer):
 
     def connection_groups(self, **kwargs):
         """
@@ -104,8 +104,8 @@ class EventConsumer(JsonWebsocketConsumer):
             pass
         connection_signal.send(self, **kwargs)
 
-    def receive(self, content, **kwargs):
-        # Stick the message onto the processing queue
+    def raw_receive(self, message, **kwargs):
+        content = json.loads(message['text'])
         for (key, value) in kwargs.items():
             content[key] = value
         if content['channel'] == 'echo':
@@ -118,6 +118,9 @@ class EventConsumer(JsonWebsocketConsumer):
             })
             return
         Channel('otree.redwood.events').send(content)
+
+    def send(self, content):
+        self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
 
 
 try:
