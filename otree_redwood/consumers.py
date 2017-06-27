@@ -79,9 +79,6 @@ connection_signal = django.dispatch.Signal(providing_args=[
 
 class EventConsumer(JsonWebsocketConsumer):
 
-    # Set to True if you want it, else leave it out
-    strict_ordering = True
-
     def connection_groups(self, **kwargs):
         """
         Called to return the list of groups to automatically add/remove
