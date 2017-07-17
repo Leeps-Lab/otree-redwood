@@ -99,6 +99,7 @@ class EventConsumer(WebsocketConsumer):
 
     def disconnect(self, message, **kwargs):
         try:
+            # TODO: Clean out stale connections if not terminated cleanly.
             Connection.objects.get(participant_code=kwargs['participant_code']).delete()
         except Connection.DoesNotExist:
             pass

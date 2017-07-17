@@ -10,7 +10,7 @@ from django.core import serializers
 
 from otree.models import Session
 from otree_redwood import consumers, stats
-from otree_redwood.models import Event
+from otree_redwood.models import Event, Connection
 from otree_redwood.abstract_views import output_functions
 
 
@@ -68,5 +68,5 @@ class DebugView(vanilla.TemplateView):
             mean = sum(values) / len(values)
             context['contexts'][key] = mean
         context['fields'] = dict(stats.fields)
-        context['connected_participants'] = consumers.get_connected_participants()
+        context['connected_participants'] = Connection.objects.all()
         return context

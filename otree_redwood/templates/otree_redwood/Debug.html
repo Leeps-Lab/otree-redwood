@@ -28,6 +28,12 @@
 	{% endfor %}
 </table>
 
-<p>{{ connected_participants }}</p>
+<p>
+<ul>
+{% for connection in connected_participants %}
+	<li>{{ connection.participant_code }}</li>
+{% endfor %}
+</ul>
+</p>
 
 {% endblock %}
