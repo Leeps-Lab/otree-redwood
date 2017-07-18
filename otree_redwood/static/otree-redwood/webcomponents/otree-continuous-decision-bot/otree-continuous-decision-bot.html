@@ -1,0 +1,86 @@
+<link
+	rel="import"
+	href="/static/bower_components/polymer/polymer.html" />
+<link rel="import" href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
+
+
+<dom-module id="otree-continuous-decision-bot">
+
+	<template>
+        <otree-constants id="constants"></otree-constants>
+        <div class="well">
+	        <p>Continuous Decision Bot</p>
+	        <p>Direction of max payoff: [[ direction ]]</p>
+	        <template is="dom-if" if="[[running]]">
+		        <button type="button" on-click="stop">Stop</button>
+	        </template>
+	        <template is="dom-if" if="[[!running]]">
+		        <button type="button" on-click="start">Start</button>
+	        </template>
+        </div>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'otree-continuous-decision-bot',
+			properties: {
+				myDecision: {
+                    type: Number,
+                    notify: true
+                },
+                otherDecision: {
+                    type: Number
+                },
+                direction: {
+                	type: String
+                },
+                running: {
+                	type: Boolean
+                }
+			},
+			ready() {
+				if (this.$.constants.debug) {
+					this.running = true;
+					setTimeout(this._updateDecision.bind(this), this._nextDecisionInterval());
+				}
+			},
+			start() {
+				this.running = true;
+				setTimeout(this._updateDecision.bind(this), this._nextDecisionInterval());
+			},
+			stop() {
+
+				this.running = false;
+			},
+			_updateDecision() {
+                if (this.myDecision == null || this.otherDecision == null || isNaN(this.myDecision) || isNaN(this.otherDecision)) {
+                    this.myDecision = Math.random();
+                } else {
+					const currPayoff = this.payoffFunction(this.myDecision, this.otherDecision);
+					const up = Math.min(this.myDecision + 0.1*Math.random(), 1);
+					const down = Math.max(this.myDecision - 0.1*Math.random(), 0);
+					const upPayoff = this.payoffFunction(up, this.otherDecision);
+					const downPayoff = this.payoffFunction(down, this.otherDecision);
+					if (upPayoff > currPayoff) {
+						this.myDecision = up;
+						this.direction = 'up';
+					} else if (downPayoff > currPayoff) {
+						this.myDecision = down;
+						this.direction = 'down';
+					} else {
+						this.direction = 'none';
+					}
+				}
+				if (this.running) {
+					setTimeout(this._updateDecision.bind(this), this._nextDecisionInterval());
+				}
+			},
+			_nextDecisionInterval() {
+				const max = 1000;
+				const min = 100;
+				return Math.floor(Math.random() * (max - min)) + min;
+			}
+		});
+	</script>
+
+</dom-module>
