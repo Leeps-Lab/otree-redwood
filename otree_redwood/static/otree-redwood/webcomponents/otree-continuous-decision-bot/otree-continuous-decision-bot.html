@@ -53,7 +53,12 @@
 				this.running = false;
 			},
 			_updateDecision() {
-                if (this.myDecision == null || this.otherDecision == null || isNaN(this.myDecision) || isNaN(this.otherDecision)) {
+				if (
+						Math.random() < 0.1 ||
+						this.myDecision == null ||
+						this.otherDecision == null ||
+						isNaN(this.myDecision) ||
+						isNaN(this.otherDecision)) {
                     this.myDecision = Math.random();
                 } else {
 					const currPayoff = this.payoffFunction(this.myDecision, this.otherDecision);

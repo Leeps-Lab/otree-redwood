@@ -15,19 +15,6 @@
 	{% endfor %}
 </table>
 
-<table>
-	<tr>
-		<th>Variable</th>
-		<th>Count</th>
-	</tr>
-	{% for k, v in fields.items %}
-		<tr>
-			<td>{{ k }}</td>
-			<td>{{ v }}</td>
-		</tr>
-	{% endfor %}
-</table>
-
 <p>
 <ul>
 {% for connection in connected_participants %}

@@ -30,9 +30,6 @@ def consume_event(message):
             if not session:
                 session = Session.objects.get(code=content['session_code'])
                 cache.set(content['session_code'], session)
-                obs.add('session_cache_failure', 1)
-            else:
-                obs.add('session_cache_hit', 1)
 
         subsession_number = int(content['subsession_number'])
         round_number = int(content['round_number'])
@@ -43,9 +40,6 @@ def consume_event(message):
             if not participant:
                 participant = Participant.objects.get(code=content['participant_code'])
                 cache.set(content['participant_code'], participant)
-                obs.add('participant_cache_failure', 1)
-            else:
-                obs.add('participant_cache_hit', 1)
 
         # TODO: Look into saving events async in another thread.
         with track('saving event object to database'):

@@ -3,7 +3,6 @@ import time
 
 
 observations = defaultdict(lambda: [])
-fields = defaultdict(lambda: 0)
 
 
 class track():
@@ -20,6 +19,3 @@ class track():
         observations[self.context].append(elapsed_time)
         while len(observations) > 10000:
             observations.pop(0)
-
-    def add(self, key, value):
-        fields[key] += value
