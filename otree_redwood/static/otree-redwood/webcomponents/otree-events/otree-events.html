@@ -9,13 +9,6 @@
 <dom-module id="otree-events">
 
 	<template>
-		<style>
-			#debug {
-				position: absolute;
-				top: 10px;
-				left: 10px;
-			}
-		</style>
     	<otree-constants id="constants" debug="{{debug}}"></otree-constants>
     	<template is="dom-if" if="[[master]]">
     		<template is="dom-if" if="[[debug]]">
@@ -115,7 +108,7 @@
 				this.socket = socket;
 				const event = JSON.parse(message.data);
 				if (event.channel == 'echo') {
-					const rtt = Date.now() - this.send_time;
+					const rtt = Date.now() - event.timestamp;
 					this.push('roundTripTimes', rtt);
 					if (this.roundTripTimes.length > 10) {
 						this.splice('roundTripTimes', 0, 1);
@@ -129,11 +122,10 @@
 			sendPing() {
 				this.socket = socket;
 				if (socket.readyState == 1) {
-					const msgID = Math.floor(Math.random() * 1e10);
 					socket.send(JSON.stringify({
-						'channel': 'echo'
+						'channel': 'echo',
+						'timestamp': Date.now()
 					}));
-					this.send_time = Date.now();
 				}
 				window.setTimeout(this.sendPing.bind(this), 1000);
 			},
