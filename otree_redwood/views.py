@@ -82,8 +82,9 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
             )
 
             w = csv.writer(response)
-            for table in session_tables:
-                pass
+            for header, rows in session_tables:
+                w.writerow(header)
+                w.writerows(rows)
 
             return response
 
