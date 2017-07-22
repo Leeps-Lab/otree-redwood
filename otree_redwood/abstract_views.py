@@ -18,6 +18,13 @@ class Page(oTreePage):
     """Page is designed to be used instead of an oTree Page to provide
     Redwood-specific functions for coordinating inter-page communication for
     subjects in the Page.
+
+    TODOS:
+    * Provide some facilities for making sure all players in the group are connected.
+      Let app decide what to do if a player disconnects.
+    * Use period_start message in components and ContinuousDecisionPage to gate input.
+    * Add period_end message on a timer to cleanly end the period before oTree kicks
+      subjects to the next page.
     """
 
     def dispatch(self, request, *args, **kwargs):
