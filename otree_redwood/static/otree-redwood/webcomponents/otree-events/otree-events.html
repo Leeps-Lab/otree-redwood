@@ -9,12 +9,20 @@
 <dom-module id="otree-events">
 
 	<template>
-    	<otree-constants id="constants" debug="{{debug}}"></otree-constants>
-    	<template is="dom-if" if="[[master]]">
-    		<template is="dom-if" if="[[debug]]">
-		    	<div id="debug">
-		    		<p>Connected: [[connectionStatus]]</p>
-		    		<p>Ping: [[avgPingTime]]</p>
+    	<otree-constants id="constants" debug="{{ debug }}"></otree-constants>
+    	<template is="dom-if" if="[[ master ]]">
+    		<template is="dom-if" if="[[ debug ]]">
+		    	<div class="well">
+		    		<p>Connected: [[ connectionStatus ]]</p>
+		    		<p>Ping: [[ avgPingTime ]]</p>
+		    		<button
+		    			type="button"
+		    			on-click="togglePing"
+		    			hidden$="[[ ping ]]">Start</button>
+		    		<button
+		    			type="button"
+		    			on-click="togglePing"
+		    			hidden$="[[ !ping ]]">Stop</button>
 		    	</div>
 	    	</template>
     	</template>
@@ -46,6 +54,10 @@
 				connectionStatus: {
 					type: String,
 					computed: '_computeConnectionStatus(socket.*, roundTripTimes.*)'
+				},
+				ping: {
+					type: Boolean,
+					value: true
 				},
 				/* Bound by the otree-constants component */
 				debug: {
@@ -108,7 +120,7 @@
 				this.socket = socket;
 				const event = JSON.parse(message.data);
 				if (event.channel == 'echo') {
-					const rtt = Date.now() - event.timestamp;
+					const rtt = Date.now() - event.payload;
 					this.push('roundTripTimes', rtt);
 					if (this.roundTripTimes.length > 10) {
 						this.splice('roundTripTimes', 0, 1);
@@ -119,15 +131,23 @@
 					l.fire('event', event, {bubbles: false});
 				});
 			},
+			togglePing() {
+				this.ping = !this.ping;
+				if (this.ping) {
+					this.sendPing();
+				}
+			},
 			sendPing() {
 				this.socket = socket;
 				if (socket.readyState == 1) {
 					socket.send(JSON.stringify({
 						'channel': 'echo',
-						'timestamp': Date.now()
+						'payload': Date.now()
 					}));
 				}
-				window.setTimeout(this.sendPing.bind(this), 1000);
+				if (this.ping) {
+					window.setTimeout(this.sendPing.bind(this), 1000);
+				}
 			},
 			_computeAvgPingTime() {
 				if (this.roundTripTimes.length == 0) {
