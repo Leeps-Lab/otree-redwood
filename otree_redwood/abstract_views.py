@@ -22,9 +22,6 @@ class Page(oTreePage):
     TODOS:
     * Provide some facilities for making sure all players in the group are connected.
       Let app decide what to do if a player disconnects.
-    * Use period_start message in components and ContinuousDecisionPage to gate input.
-    * Add period_end message on a timer to cleanly end the period before oTree kicks
-      subjects to the next page.
     """
 
     def dispatch(self, request, *args, **kwargs):
@@ -133,6 +130,9 @@ class ContinuousDecisionPage(Page):
         
         This should be done once per group.
         This bookends the start and end of the period.
+
+        TODO: Need a better way of setting initial strategy.
+        period_end event (in Page, above) can be used as the end time.
         """
         for player in self.group.get_players():
             start_decision, end_decision = Event(), Event()
