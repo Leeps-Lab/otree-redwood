@@ -1,4 +1,5 @@
 from channels import Group
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.http.response import HttpResponseRedirect
 from django.utils import timezone
@@ -6,7 +7,6 @@ from datetime import timedelta
 import json
 import logging
 from otree.api import Page as oTreePage
-from otree.views.abstract import global_lock
 import threading
 import time
 
@@ -44,19 +44,17 @@ class Page(oTreePage):
         pass
 
     def _check_if_all_players_ready(self, **kwargs):
-        with global_lock():
+        with transaction.atomic():
             try:
                 ready = RanPlayersReadyFunction.objects.get(
                     page_index=self._page_index,
                     id_in_subsession=self.group.id_in_subsession,
-                    session=self.session
-                )
+                    session=self.session)
             except RanPlayersReadyFunction.DoesNotExist:
                 ready = RanPlayersReadyFunction.objects.create(
                     page_index=self._page_index,
                     id_in_subsession=self.group.id_in_subsession,
-                    session=self.session
-                )
+                    session=self.session)
             if ready.ran:
                 return
             for player in self.group.get_players():
@@ -66,14 +64,14 @@ class Page(oTreePage):
             self.when_all_players_ready()
             ready.ran = True
             ready.save()
-            event = Event.objects.create(
-                session=self.session,
-                subsession=self.subsession.name(),
-                round=self.round_number,
-                group=self.group.id_in_subsession,
-                channel='period_start',
-                value=time.time())
+
+            consumers.send(self.group, 'period_start', time.time())
             consumers.connection_signal.disconnect(self._check_if_all_players_ready)
+            if self.period_length:
+                self._timer = threading.Timer(
+                    self.period_length,
+                    lambda: consumers.send(self.group, 'period_end', time.time()))
+                self._timer.start()
 
 
 class ContinuousDecisionPage(Page):
