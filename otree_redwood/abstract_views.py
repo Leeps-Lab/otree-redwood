@@ -186,9 +186,6 @@ class DiscreteEventEmitter():
             _timers[self.group] = self.timer
             self.timer.start()
 
-    def tick(self):
-        pass
-
     def start(self):
         if self.timer:
             self.timer.start()
