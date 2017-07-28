@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.db.models import Manager
 import otree
@@ -12,13 +14,9 @@ class Event(models.Model):
         ordering = ['timestamp']
 
     timestamp = models.DateTimeField(null=False)
-    session = models.ForeignKey(
-        'otree.Session',
-        null=False,
-        related_name='+')
-    subsession = models.IntegerField(null=True)
-    round = models.IntegerField(null=False)
-    group = models.IntegerField(null=False)
+    content_type = models.ForeignKey(ContentType, related_name='content_type_events')
+    group_pk = models.PositiveIntegerField()
+    group = GenericForeignKey('content_type', 'group_pk')
     channel = models.CharField(max_length=100, null=False)
     participant = models.ForeignKey(
         'otree.Participant',
@@ -49,13 +47,14 @@ class RanPlayersReadyFunction(models.Model):
     class Meta:
         app_label = "otree"
         ordering = ['-timestamp']
-        unique_together = ['page_index', 'session', 'id_in_subsession']
-        index_together = ['page_index', 'session', 'id_in_subsession']
+        unique_together = ['page_index', 'group_pk']
+        index_together = ['page_index', 'group_pk']
 
     timestamp = models.DateTimeField(null=False)
     page_index = models.PositiveIntegerField()
-    session = models.ForeignKey('otree.Session')
-    id_in_subsession = models.PositiveIntegerField(default=0)
+    content_type = models.ForeignKey(ContentType, related_name='content_type_ran_players_ready_functions')
+    group_pk = models.PositiveIntegerField()
+    group = GenericForeignKey('content_type', 'group_pk')
     ran = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):

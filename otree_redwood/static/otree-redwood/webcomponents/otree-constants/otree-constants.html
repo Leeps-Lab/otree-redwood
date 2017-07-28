@@ -18,9 +18,6 @@
 	</template>
 
 	<script>
-		var session = undefined;
-		var subsession = undefined;
-		var round = undefined;
 		var group = undefined;
 		var role = undefined;
 		var participantCode = undefined;
@@ -31,34 +28,7 @@
 		Polymer({
 			is: 'otree-constants',
 			properties: {
-				/** Unique code for the session, e.g. {{ session.code }} */
-				session: {
-					type: String,
-					notify: true,
-					readonly: true,
-					value: () => {
-						return oTree.session;
-					}
-				},
-				/** Subsession number, e.g. {{ subsession }} */
-				subsession: {
-					type: Number,
-					notify: true,
-					readonly: true,
-					value: () => {
-						return oTree.subsession;
-					}
-				},
-				/** Round number, e.g. {{ player.round_number }} */
-				round: {
-					type: Number,
-					notify: true,
-					readonly: true,
-					value: () => {
-						return oTree.round;
-					}
-				},
-				/** Group number, e.g. {{ player.group.id_in_subsession }} */
+				/** Group primary key, e.g. {{ player.group.pk }} */
 				group: {
 					type: Number,
 					notify: true,

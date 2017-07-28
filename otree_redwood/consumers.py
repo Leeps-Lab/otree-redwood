@@ -1,23 +1,15 @@
 from channels import Channel, Group
 from channels.generic.websockets import WebsocketConsumer
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 import django.dispatch
+import importlib
 import json
 import time
-from otree.models.session import Session
 from otree.models.participant import Participant
 
 from otree_redwood.models import Event, Connection
 from otree_redwood.stats import track 
-
-
-def group_key(session_code, subsession_number, round_number, group_number):
-    # Get a group key suitable for use with a Django channel Group.
-    return 'session-{}-subsession-{}-round-{}-group-{}'.format(
-        session_code,
-        subsession_number,
-        round_number,
-        group_number)
 
 
 def consume_event(message):
@@ -25,15 +17,12 @@ def consume_event(message):
     channel = content['channel']
 
     with track('recv_channel=' + channel):
-        with track('trying to fetch session from cache') as obs:
-            session = cache.get(content['session_code'])
-            if not session:
-                session = Session.objects.get(code=content['session_code'])
-                cache.set(content['session_code'], session)
-
-        subsession_number = int(content['subsession_number'])
-        round_number = int(content['round_number'])
-        group_number = int(content['group_number'])
+        with track('trying to fetch group from cache') as obs:
+            group = cache.get(content['group'])
+            if not group:
+                models_module = importlib.import_module('{}.models'.format(content['app_name']))
+                group = models_module.Group.objects.get(pk=content['group'])
+                cache.set(content['group'], group)
 
         with track('trying to fetch participant from cache') as obs:
             participant = cache.get(content['participant_code'])
@@ -44,31 +33,19 @@ def consume_event(message):
         # TODO: Look into saving events async in another thread.
         with track('saving event object to database'):
             event = Event.objects.create(
-                session=session,
-                subsession=subsession_number,
-                round=round_number,
-                group=group_number,
+                group=group,
                 participant=participant,
                 channel=channel,
                 value=content['payload'])
 
-        channel_key = group_key(
-            session.code,
-            subsession_number,
-            round_number,
-            group_number) + '-' + channel
+        channel_key = '{}-{}'.format(group.pk, channel)
         
         if channel_key in _watchers:
             with track('calling watcher'):
                 _watchers[channel_key](event)
 
 
-connection_signal = django.dispatch.Signal(providing_args=[
-    'session',
-    'subsession',
-    'round',
-    'group'
-])
+connection_signal = django.dispatch.Signal(providing_args=['group'])
 
 
 class EventConsumer(WebsocketConsumer):
@@ -78,17 +55,11 @@ class EventConsumer(WebsocketConsumer):
         Called to return the list of groups to automatically add/remove
         this connection to/from.
         """
-        return [group_key(
-            kwargs['session_code'],
-            kwargs['subsession_number'],
-            kwargs['round_number'],
-            kwargs['group_number'])]
+        return [str(kwargs['group'])]
 
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
-        Connection.objects.create(
-            participant_code=kwargs['participant_code'],
-        )
+        Connection.objects.create(participant_code=kwargs['participant_code'])
         connection_signal.send(self, **kwargs)
 
     def disconnect(self, message, **kwargs):
@@ -123,12 +94,7 @@ try:
 except:
     _watchers = {}
 def watch(group, channel, callback):
-    watcher = group_key(
-        group.session.code,
-        group.subsession.id,
-        group.round_number,
-        group.id_in_subsession)
-    watcher += '-' + channel
+    watcher = ''.format('{}-{}', group.pk, channel)
     if watcher in _watchers:
         return None
     _watchers[watcher] = callback
@@ -143,17 +109,10 @@ def unwatch(watcher):
 def send(group, channel, payload):
     with track('send_channel=' + channel):
         Event.objects.create(
-            session=group.session,
-            subsession=group.subsession.id,
-            round=group.round_number,
-            group=group.id_in_subsession,
+            group=group,
             channel=channel,
             value=payload)
-        Group(group_key(
-            group.session.code,
-            group.subsession.id,
-            group.round_number,
-            group.id_in_subsession)).send(
+        Group(str(group.pk)).send(
                 {'text': json.dumps({
                     'channel': channel,
                     'payload': payload

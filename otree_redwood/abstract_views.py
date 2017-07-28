@@ -45,13 +45,12 @@ class Page(oTreePage):
             try:
                 ready = RanPlayersReadyFunction.objects.get(
                     page_index=self._page_index,
-                    id_in_subsession=self.group.id_in_subsession,
-                    session=self.session)
+                    group_pk=self.group.pk)
             except RanPlayersReadyFunction.DoesNotExist:
                 ready = RanPlayersReadyFunction.objects.create(
                     page_index=self._page_index,
-                    id_in_subsession=self.group.id_in_subsession,
-                    session=self.session)
+                    group=self.group)
+
             if ready.ran:
                 return
             for player in self.group.get_players():
@@ -63,6 +62,12 @@ class Page(oTreePage):
             ready.save()
 
             consumers.send(self.group, 'period_start', time.time())
+
+            event = Event.objects.create(
+                group=self.group,
+                channel='period_start',
+                value=time.time())
+            
             consumers.connection_signal.disconnect(self._check_if_all_players_ready)
             if self.period_length:
                 self._timer = threading.Timer(
@@ -91,10 +96,7 @@ class ContinuousDecisionPage(Page):
         self.group_decisions = {}
         for player in self.group.get_players():
             decisions = Event.objects.filter(
-                session=self.session,
-                subsession= self.subsession.name(),
-                round=self.round_number,
-                group=self.group.id_in_subsession,
+                group_pk=self.group.pk,
                 channel='decisions',
                 participant=player.participant
             )
@@ -137,10 +139,7 @@ class ContinuousDecisionPage(Page):
         for player in self.group.get_players():
             start_decision, end_decision = Event(), Event()
             for d in start_decision, end_decision:
-                d.session = self.session
-                d.subsession = self.subsession.name()
-                d.round = self.round_number
-                d.group = self.group.id_in_subsession
+                d.group = self.group
                 d.channel = 'decisions'
                 d.participant = player.participant
 
