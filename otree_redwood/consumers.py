@@ -94,7 +94,7 @@ try:
 except:
     _watchers = {}
 def watch(group, channel, callback):
-    watcher = ''.format('{}-{}', group.pk, channel)
+    watcher = '{}-{}'.format(group.pk, channel)
     if watcher in _watchers:
         return None
     _watchers[watcher] = callback

@@ -1,4 +1,5 @@
 from channels import Group
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.http.response import HttpResponseRedirect
@@ -45,6 +46,7 @@ class Page(oTreePage):
             try:
                 ready = RanPlayersReadyFunction.objects.get(
                     page_index=self._page_index,
+                    content_type=ContentType.objects.get_for_model(self.group),
                     group_pk=self.group.pk)
             except RanPlayersReadyFunction.DoesNotExist:
                 ready = RanPlayersReadyFunction.objects.create(
