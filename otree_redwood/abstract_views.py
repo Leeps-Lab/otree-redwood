@@ -1,13 +1,15 @@
 from channels import Group
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 from django.db.models.signals import post_save
 from django.http.response import HttpResponseRedirect
 from django.utils import timezone
 from datetime import timedelta
 import json
 import logging
+import otree.common_internal
 from otree.api import Page as oTreePage
+from otree.views.abstract import global_lock
+import redis_lock
 import threading
 import time
 
@@ -41,8 +43,25 @@ class Page(oTreePage):
         """
         pass
 
+    def period_length(self):
+        """Implement this to set a timeout on the page. A message will be sent on
+        the period_start when all players in the group have connected their websockets.
+        Another message will be send on the period_end channel period_length seconds from
+        the period_start message.
+        """
+        return None
+
     def _check_if_all_players_ready(self, **kwargs):
-        with transaction.atomic():
+        if otree.common_internal.USE_REDIS:
+            lock = redis_lock.Lock(
+                otree.common_internal.get_redis_conn(),
+                '{}-{}-{}'.format(self.session.pk, self._page_index, self.group.id_in_subsession),
+                expire=60,
+                auto_renewal=True)
+        else:
+            lock = global_lock()
+
+        with lock:
             try:
                 ready = RanPlayersReadyFunction.objects.get(
                     page_index=self._page_index,
@@ -63,26 +82,20 @@ class Page(oTreePage):
             ready.ran = True
             ready.save()
 
-            consumers.send(self.group, 'period_start', time.time())
+            consumers.send(self.group, 'state', 'period_start')
 
-            event = Event.objects.create(
-                group=self.group,
-                channel='period_start',
-                value=time.time())
-            
             consumers.connection_signal.disconnect(self._check_if_all_players_ready)
-            if self.period_length:
+            if self.period_length():
                 self._timer = threading.Timer(
-                    self.period_length,
-                    lambda: consumers.send(self.group, 'period_end', time.time()))
+                    self.period_length(),
+                    lambda: consumers.send(self.group, 'state', 'period_end'))
                 self._timer.start()
 
 
 class ContinuousDecisionPage(Page):
-    period_length = 360
 
     def __init__(self, *args, **kwargs):
-        self.__class__.timeout_seconds = self.period_length + 10
+        self.__class__.timeout_seconds = self.period_length() + 10
         super().__init__(*args, **kwargs)
         self._watcher = None
 
@@ -100,23 +113,35 @@ class ContinuousDecisionPage(Page):
             decisions = Event.objects.filter(
                 group_pk=self.group.pk,
                 channel='decisions',
-                participant=player.participant
-            )
+                participant=player.participant)
             if len(decisions) > 0:
                 self.group_decisions[player.participant.code] = decisions[0].value
             else:
-                self.group_decisions[player.participant.code] = self.initial_decision
+                self.group_decisions[player.participant.code] = self.initial_decision()
 
         self._watcher = consumers.watch(self.group, 'decisions', self.handle_decision_event)
 
         return result
 
     def when_all_players_ready(self):
-        # calculate start and end times for the period
         start_time = timezone.now()
-        end_time = start_time + timedelta(seconds=self.period_length)
+        for player in self.group.get_players():
+            d = Event()
+            d.group = self.group
+            d.channel = 'decisions'
+            d.participant = player.participant
 
-        self._log_decision_bookends(start_time, end_time)
+            d.timestamp = start_time
+            d.value = self.initial_decision()
+            self.group_decisions[d.participant.code] = d.value
+
+            d.save()
+        consumers.send(self.group, 'group_decisions', self.group_decisions)
+
+    def initial_decision(self):
+        """Implement this to give the players an initial decision.
+        """
+        return None
 
     def handle_decision_event(self, event):
         # TODO: Probably want to ignore decisions that come in before the period_start signal is sent.
@@ -127,31 +152,7 @@ class ContinuousDecisionPage(Page):
     def before_next_page(self):
         pass
         # TODO: Unwatch so that the dictionary doesn't leak
-        # consumers.unwatch(self._watcher)
-
-    def _log_decision_bookends(self, start_time, end_time):
-        """Insert dummy decisions into the database.
-        
-        This should be done once per group.
-        This bookends the start and end of the period.
-
-        TODO: Need a better way of setting initial strategy.
-        period_end event (in Page, above) can be used as the end time.
-        """
-        for player in self.group.get_players():
-            start_decision, end_decision = Event(), Event()
-            for d in start_decision, end_decision:
-                d.group = self.group
-                d.channel = 'decisions'
-                d.participant = player.participant
-
-            start_decision.timestamp = start_time
-            start_decision.value = self.initial_decision
-            end_decision.timestamp = end_time
-            end_decision.value = None
-
-            start_decision.save()
-            end_decision.save()
+        # e.g. consumers.unwatch(self._watcher)
 
 
 output_functions = []

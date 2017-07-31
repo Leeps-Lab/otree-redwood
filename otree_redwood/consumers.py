@@ -59,6 +59,23 @@ class EventConsumer(WebsocketConsumer):
 
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
+        with track('trying to fetch group from cache') as obs:
+            group = cache.get(kwargs['group'])
+            if not group:
+                models_module = importlib.import_module('{}.models'.format(kwargs['app_name']))
+                group = models_module.Group.objects.get(pk=kwargs['group'])
+                cache.set(kwargs['group'], group)
+        try:
+            last_state = Event.objects.filter(
+                    channel='state',
+                    content_type=ContentType.objects.get_for_model(group),
+                    group_pk=group.pk).order_by('timestamp')[0]
+            self.send({
+                'channel': 'state',
+                'payload': last_state.value
+            })
+        except IndexError:
+            pass
         Connection.objects.create(participant_code=kwargs['participant_code'])
         connection_signal.send(self, **kwargs)
 

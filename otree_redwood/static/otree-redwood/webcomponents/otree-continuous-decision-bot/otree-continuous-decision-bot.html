@@ -2,6 +2,7 @@
 	rel="import"
 	href="/static/bower_components/polymer/polymer.html" />
 <link rel="import" href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
+<link rel="import" href="/static/otree-redwood/webcomponents/otree-period/otree-period.html">
 
 
 <dom-module id="otree-continuous-decision-bot">
@@ -10,6 +11,9 @@
         <otree-constants id="constants"
         	debug="{{ debug }}">
         </otree-constants>
+        <otree-period
+            running="{{ _isPeriodRunning }}">
+        </otree-period>
         <template is="dom-if" if="[[ debug ]]">
 	        <div class="well">
 		        <p>Continuous Decision Bot</p>
@@ -80,13 +84,12 @@
                 pattern: {
                 	type: Boolean,
                 	value: false
+                },
+                // set by otree-period
+                _isPeriodRunning: {
+                	type: Boolean,
+                	observer: '_isPeriodRunningChanged'
                 }
-			},
-			ready() {
-				if (this.debug) {
-					this.running = true;
-					setTimeout(this._updateDecision.bind(this), this._nextDecisionInterval());
-				}
 			},
 			start() {
 				this.running = true;
@@ -97,6 +100,13 @@
 			},
 			togglePattern() {
 				this.pattern = !this.pattern;
+			},
+			_isPeriodRunningChanged() {
+				if (this.debug && this._isPeriodRunning) {
+					this.start();
+				} else {
+					this.stop();
+				}
 			},
 			_updateDecision() {
 				if (this.pattern) {

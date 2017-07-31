@@ -3,11 +3,11 @@
 	href="/static/bower_components/polymer/polymer.html" />
 
 <link
-	rel="import" 
-	href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
-<link
     rel="import"
     href="/static/otree-redwood/webcomponents/otree-channel/otree-channel.html" />
+<link
+	rel="import" 
+	href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
 
 
 <dom-module id="otree-continuous-decision">
@@ -19,7 +19,6 @@
     		channel="decisions">
 	    </otree-channel>
     	<otree-channel
-    		id="groupDecisionsChannel"
     		channel="group_decisions"
     		on-event="_handleGroupDecisionsEvent">
 	    </otree-channel>
