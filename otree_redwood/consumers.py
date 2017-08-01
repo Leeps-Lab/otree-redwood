@@ -3,6 +3,7 @@ from channels.generic.websockets import WebsocketConsumer
 from collections import defaultdict
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
+from django.db.models.signals import post_save
 import django.dispatch
 import importlib
 import json
@@ -19,8 +20,10 @@ events_signals = defaultdict(lambda: django.dispatch.Signal(providing_args=['eve
 
 def connect(group, channel, receiver):
     group_key = '{}-{}'.format(group.pk, channel)
-    events_signals[group_key].connect(receiver)
-    return (group_key, receiver)
+    if group_key not in events_signals:
+        events_signals[group_key].connect(receiver)
+        return (group_key, receiver)
+    return None
 
 
 def disconnect(watcher):
@@ -115,11 +118,26 @@ class EventConsumer(WebsocketConsumer):
 
 class DebugEventWatcher(WebsocketConsumer):
 
+    def connection_groups(self, **kwargs):
+        """
+        Called to return the list of groups to automatically add/remove
+        this connection to/from.
+        """
+        return ['debug']
+
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
 
-    def send(self, content):
-        self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
+
+@django.dispatch.receiver(post_save, sender=Event)
+def on_event_save(sender, instance, **kwargs):
+    Group('debug').send({'text': json.dumps({
+        'timestamp': time.mktime(instance.timestamp.timetuple())*1e3 + instance.timestamp.microsecond/1e3,
+        'group': instance.group_pk,
+        'channel': instance.channel,
+        'participant': None if not instance.participant else instance.participant.code,
+        'value': instance.value
+    })})
 
 
 def send(group, channel, payload):

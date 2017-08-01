@@ -1,4 +1,13 @@
 {% extends "otree/BaseAdmin.html" %}
+{% load staticfiles %}
+
+{% block scripts %}
+    <script src="//code.highcharts.com/highcharts.js"></script>
+
+    <link
+        rel="import"
+        href="{% static "otree-redwood/webcomponents/otree-redwood-debug/otree-redwood-debug.html" %}">
+{% endblock %}
 
 {% block content %}
 
@@ -22,5 +31,7 @@
 {% endfor %}
 </ul>
 </p>
+
+<otree-redwood-debug></otree-redwood-debug>
 
 {% endblock %}

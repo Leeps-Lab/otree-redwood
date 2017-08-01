@@ -1,0 +1,39 @@
+<link
+	rel="import"
+	href="/static/bower_components/polymer/polymer.html" />
+
+
+<dom-module id="otree-redwood-debug">
+
+	<template>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'otree-redwood-debug',
+			ready() {
+				let protocol = 'ws://';
+				if (window.location.protocol === 'https:') {
+					protocol = 'wss://';
+				}
+				const addr = (
+					protocol +
+					window.location.host +
+					'/otree/redwood/debug/');
+				this.socket = new ReconnectingWebSocket(addr, null, {
+					timeoutInterval: 10000
+				});
+				this.socket.onerror = this.onError.bind(this);
+				this.socket.onmessage = this.onMessage.bind(this);
+			},
+			onError(err) {
+				console.error(err);
+			},
+			onMessage(message) {
+				const event = JSON.parse(message.data);
+				console.log(event);
+			}
+		});
+	</script>
+
+</dom-module>

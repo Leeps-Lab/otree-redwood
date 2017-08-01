@@ -1,15 +1,13 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
-from django.db.models import Manager
-import otree
-from otree.db import models
+from django.db import models
+from otree.db.serializedfields import JSONField
 
 
 class Event(models.Model):
 
     class Meta:
-        app_label = "otree"
         # Default to queries returning most recent Event first.
         ordering = ['timestamp']
 
@@ -22,7 +20,7 @@ class Event(models.Model):
         'otree.Participant',
         related_name='+',
         null=True)
-    value = models._JSONField()
+    value = JSONField()
 
     @property
     def message(self):
@@ -45,7 +43,6 @@ class Event(models.Model):
 class RanPlayersReadyFunction(models.Model):
     
     class Meta:
-        app_label = "otree"
         ordering = ['-timestamp']
         unique_together = ['page_index', 'group_pk']
         index_together = ['page_index', 'group_pk']
@@ -65,8 +62,4 @@ class RanPlayersReadyFunction(models.Model):
 
 
 class Connection(models.Model):
-
-    class Meta:
-        app_label = "otree"
-
     participant_code = models.CharField(max_length=10, null=False)
