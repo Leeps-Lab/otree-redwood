@@ -14,14 +14,14 @@ from otree_redwood.models import Event, Connection
 from otree_redwood.stats import track 
 
 
-connection_signal = django.dispatch.Signal(providing_args=['group'])
+connection_signal = django.dispatch.Signal(providing_args=['group', 'participant', 'state'])
 events_signals = defaultdict(lambda: django.dispatch.Signal(providing_args=['event']))
 
 
 def connect(group, channel, receiver):
     group_key = '{}-{}'.format(group.pk, channel)
     if group_key not in events_signals:
-        events_signals[group_key].connect(receiver)
+        events_signals[group_key].connect(receiver, weak=False)
         return (group_key, receiver)
     return None
 
@@ -30,6 +30,25 @@ def disconnect(watcher):
     if watcher:
         group_key, receiver = watcher
         events_signals[group_key].disconnect(receiver)
+
+
+def get_cached_group(app_name, group_pk):
+    with track('trying to fetch group from cache') as obs:
+        group = cache.get(group_pk)
+        if not group:
+            models_module = importlib.import_module('{}.models'.format(app_name))
+            group = models_module.Group.objects.get(pk=group_pk)
+            cache.set(group_pk, group)
+    return group
+
+
+def get_cached_participant(participant_code):
+    with track('trying to fetch participant from cache') as obs:
+        participant = cache.get(participant_code)
+        if not participant:
+            participant = Participant.objects.get(code=participant_code)
+            cache.set(participant_code, participant)
+    return participant
 
 
 class EventConsumer(WebsocketConsumer):
@@ -43,12 +62,9 @@ class EventConsumer(WebsocketConsumer):
 
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
-        with track('trying to fetch group from cache') as obs:
-            group = cache.get(kwargs['group'])
-            if not group:
-                models_module = importlib.import_module('{}.models'.format(kwargs['app_name']))
-                group = models_module.Group.objects.get(pk=kwargs['group'])
-                cache.set(kwargs['group'], group)
+
+        group = get_cached_group(kwargs['app_name'], kwargs['group'])
+        participant = get_cached_participant(kwargs['participant_code'])
         try:
             last_state = Event.objects.filter(
                     channel='state',
@@ -60,16 +76,18 @@ class EventConsumer(WebsocketConsumer):
             })
         except IndexError:
             pass
-        Connection.objects.create(participant_code=kwargs['participant_code'])
-        connection_signal.send(self, **kwargs)
+        Connection.objects.get_or_create(participant_code=kwargs['participant_code'])
+        connection_signal.send(self.__class__, group=group, participant=participant, state='connected')
 
     def disconnect(self, message, **kwargs):
+        group = get_cached_group(kwargs['app_name'], kwargs['group'])
+        participant = get_cached_participant(kwargs['participant_code'])
         try:
             # TODO: Clean out stale connections if not terminated cleanly.
-            Connection.objects.get(participant_code=kwargs['participant_code']).delete()
+            Connection.objects.get(participant_code=participant.code).delete()
         except Connection.DoesNotExist:
             pass
-        connection_signal.send(self, **kwargs)
+        connection_signal.send(self.__class__, group=group, participant=participant, state='disconnected')
 
     def raw_receive(self, message, **kwargs):
         content = json.loads(message['text'])
@@ -77,29 +95,19 @@ class EventConsumer(WebsocketConsumer):
             content[key] = value
 
         if content['channel'] == 'echo':
-            payload = None
-            if 'payload' in content:
-                payload = content['payload']
-            self.send({
-                'channel': 'echo',
-                'payload': payload
-            })
-            return
+            with track('recv_channel=echo'):
+                payload = None
+                if 'payload' in content:
+                    payload = content['payload']
+                self.send({
+                    'channel': 'echo',
+                    'payload': payload
+                })
+                return
 
         with track('recv_channel=' + content['channel']):
-            with track('trying to fetch group from cache') as obs:
-                group = cache.get(content['group'])
-                if not group:
-                    models_module = importlib.import_module('{}.models'.format(content['app_name']))
-                    group = models_module.Group.objects.get(pk=content['group'])
-                    cache.set(content['group'], group)
-
-            with track('trying to fetch participant from cache') as obs:
-                participant = cache.get(content['participant_code'])
-                if not participant:
-                    participant = Participant.objects.get(code=content['participant_code'])
-                    cache.set(content['participant_code'], participant)
-
+            group = get_cached_group(kwargs['app_name'], kwargs['group'])
+            participant = get_cached_participant(kwargs['participant_code'])
             # TODO: Look into saving events async in another thread.
             with track('saving event object to database'):
                 event = Event.objects.create(
@@ -110,7 +118,7 @@ class EventConsumer(WebsocketConsumer):
 
             with track('sending signal'):
                 group_key = '{}-{}'.format(group.pk, content['channel'])
-                events_signals[group_key].send(self, event=event)
+                events_signals[group_key].send(self.__class__, event=event)
 
     def send(self, content):
         self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)

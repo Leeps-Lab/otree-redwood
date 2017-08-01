@@ -21,27 +21,17 @@ class Page(oTreePage):
     """Page is designed to be used instead of an oTree Page to provide
     Redwood-specific functions for coordinating inter-page communication for
     subjects in the Page.
-
-    TODOS:
-    * Provide some facilities for making sure all players in the group are connected.
-      Let app decide what to do if a player disconnects.
     """
 
     def dispatch(self, request, *args, **kwargs):
         # Dispatch to super first so that variables are available.
         result = super().dispatch(request, *args, **kwargs)
         self._page_index = kwargs['page_index']
-        consumers.connection_signal.connect(self._check_if_all_players_ready)
+        consumers.connection_signal.connect(self._on_connection_change)
         return result
 
     def before_next_page(self):
-        consumers.connection_signal.disconnect(self._check_if_all_players_ready)
-
-    def when_all_players_ready(self):
-        """Implement this to perform an action for the group once
-        all players are ready.
-        """
-        pass
+        consumers.connection_signal.disconnect(self._on_connection_change)
 
     def period_length(self):
         """Implement this to set a timeout on the page. A message will be sent on
@@ -51,7 +41,25 @@ class Page(oTreePage):
         """
         return None
 
-    def _check_if_all_players_ready(self, **kwargs):
+    def when_all_players_ready(self):
+        """Implement this to perform an action for the group once
+        all players are ready.
+        """
+        pass
+
+    def when_player_disconnects(self):
+        """Implement this to perform an action when a player disconnects."""
+        print('disconnect')
+        pass
+
+    def _on_connection_change(self, group=None, participant=None, state=None, **kwargs):
+        if group.pk != self.group.pk:
+            return
+
+        if state == 'disconnected' and participant.code == self.player.participant.code:
+            self.when_player_disconnects()
+            return
+
         if otree.common_internal.USE_REDIS:
             lock = redis_lock.Lock(
                 otree.common_internal.get_redis_conn(),
@@ -84,7 +92,6 @@ class Page(oTreePage):
 
             consumers.send(self.group, 'state', 'period_start')
 
-            consumers.connection_signal.disconnect(self._check_if_all_players_ready)
             if self.period_length():
                 self._timer = threading.Timer(
                     self.period_length(),
@@ -119,7 +126,7 @@ class ContinuousDecisionPage(Page):
             else:
                 self.group_decisions[player.participant.code] = self.initial_decision()
 
-        self._watcher = consumers.connect(self.group, 'decisions', self.handle_decision_event)
+        self._watcher = consumers.connect(self.group, 'decisions', self._on_decision_event)
 
         return result
 
@@ -143,8 +150,7 @@ class ContinuousDecisionPage(Page):
         """
         return None
 
-    def handle_decision_event(self, **kwargs):
-        event = kwargs['event']
+    def _on_decision_event(self, event=None, **kwargs):
         self.group_decisions[event.participant.code] = event.value
         consumers.send(self.group, 'group_decisions', self.group_decisions)
 
