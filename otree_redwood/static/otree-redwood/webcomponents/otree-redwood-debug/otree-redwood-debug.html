@@ -11,6 +11,14 @@
 	<script>
 		Polymer({
 			is: 'otree-redwood-debug',
+			properties: {
+				events: {
+					type: Array,
+					value: () => {
+						return [];
+					}
+				}
+			},
 			ready() {
 				let protocol = 'ws://';
 				if (window.location.protocol === 'https:') {
@@ -25,13 +33,16 @@
 				});
 				this.socket.onerror = this.onError.bind(this);
 				this.socket.onmessage = this.onMessage.bind(this);
+				$.getJSON('/redwood-events/').done((events) => {
+					this.events = events;
+				});
 			},
 			onError(err) {
 				console.error(err);
 			},
 			onMessage(message) {
 				const event = JSON.parse(message.data);
-				console.log(event);
+				this.events.push(event);
 			}
 		});
 	</script>

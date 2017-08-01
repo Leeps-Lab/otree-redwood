@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.db import models
 from otree.db.serializedfields import JSONField
+import time
 
 
 class Event(models.Model):
@@ -24,13 +25,12 @@ class Event(models.Model):
 
     @property
     def message(self):
-        participant_code = None
-        if self.participant:
-            participant_code = self.participant.code
         return {
-            'participant_code': participant_code,
+            'timestamp': time.mktime(self.timestamp.timetuple())*1e3 + self.timestamp.microsecond/1e3,
+            'group': self.group_pk,
+            'participant': None if not self.participant else self.participant.code,
             'channel': self.channel,
-            'payload': self.value
+            'value': self.value
         }
 
     def save(self, *args, **kwargs):

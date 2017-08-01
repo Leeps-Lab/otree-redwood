@@ -2,11 +2,12 @@ import csv
 import datetime
 import functools
 from importlib import import_module
+import json
 import math
 import operator
 import vanilla
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 
@@ -56,9 +57,19 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
     return ExportCSV
 
 
+class EventsJsonAPI(vanilla.ListView):
+
+    url_name = 'otree_redwood_events'
+    url_pattern = r"^redwood-events/$"
+    model = Event
+
+    def render_to_response(self, context):
+        return JsonResponse([e.message for e in Event.objects.all()], safe=False)
+
+
 class DebugView(vanilla.TemplateView):
 
-    url_name = 'otree_redwood_export_events'
+    url_name = 'otree_redwood_debug'
     url_pattern = r"^redwood-debug/$"
     template_name = 'otree_redwood/Debug.html'
 

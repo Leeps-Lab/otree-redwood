@@ -7,7 +7,6 @@ from django.db.models.signals import post_save
 import django.dispatch
 import importlib
 import json
-import time
 from otree.models.participant import Participant
 
 from otree_redwood.models import Event, Connection
@@ -139,13 +138,7 @@ class DebugEventWatcher(WebsocketConsumer):
 
 @django.dispatch.receiver(post_save, sender=Event)
 def on_event_save(sender, instance, **kwargs):
-    Group('debug').send({'text': json.dumps({
-        'timestamp': time.mktime(instance.timestamp.timetuple())*1e3 + instance.timestamp.microsecond/1e3,
-        'group': instance.group_pk,
-        'channel': instance.channel,
-        'participant': None if not instance.participant else instance.participant.code,
-        'value': instance.value
-    })})
+    Group('debug').send({'text': json.dumps(instance.message)})
 
 
 def send(group, channel, payload):
