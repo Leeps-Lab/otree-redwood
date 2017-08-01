@@ -119,7 +119,7 @@ class ContinuousDecisionPage(Page):
             else:
                 self.group_decisions[player.participant.code] = self.initial_decision()
 
-        self._watcher = consumers.watch(self.group, 'decisions', self.handle_decision_event)
+        self._watcher = consumers.connect(self.group, 'decisions', self.handle_decision_event)
 
         return result
 
@@ -143,16 +143,13 @@ class ContinuousDecisionPage(Page):
         """
         return None
 
-    def handle_decision_event(self, event):
-        # TODO: Probably want to ignore decisions that come in before the period_start signal is sent.
-        if event.value != None:
-            self.group_decisions[event.participant.code] = event.value
-            consumers.send(self.group, 'group_decisions', self.group_decisions)
+    def handle_decision_event(self, **kwargs):
+        event = kwargs['event']
+        self.group_decisions[event.participant.code] = event.value
+        consumers.send(self.group, 'group_decisions', self.group_decisions)
 
     def before_next_page(self):
-        pass
-        # TODO: Unwatch so that the dictionary doesn't leak
-        # e.g. consumers.unwatch(self._watcher)
+        consumers.disconnect(self._watcher)
 
 
 output_functions = []

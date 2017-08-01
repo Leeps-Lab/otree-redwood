@@ -1,5 +1,5 @@
 from channels.routing import route, route_class
-from otree_redwood.consumers import consume_event, EventConsumer
+from otree_redwood.consumers import DebugEventWatcher, EventConsumer
 
 # NOTE: otree_extensions is part of
 # otree-core's private API, which may change at any time.
@@ -10,5 +10,5 @@ channel_routing = [
     	'/group/(?P<group>[0-9]+)' +
     	'/participant/(?P<participant_code>[a-zA-Z0-9_-]+)' +
     	'/$')),
-    route('otree.redwood.events', consume_event),
+    route_class(DebugEventWatcher, path=r'^/otree/redwood/debug/$'),
 ]
