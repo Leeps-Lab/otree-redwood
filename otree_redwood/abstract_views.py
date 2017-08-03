@@ -49,7 +49,6 @@ class Page(oTreePage):
 
     def when_player_disconnects(self):
         """Implement this to perform an action when a player disconnects."""
-        print('disconnect')
         pass
 
     def _on_connection_change(self, group=None, participant=None, state=None, **kwargs):
