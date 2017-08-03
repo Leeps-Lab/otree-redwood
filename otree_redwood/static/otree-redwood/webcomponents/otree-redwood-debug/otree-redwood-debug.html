@@ -18,6 +18,9 @@
 		Polymer({
 			is: 'otree-redwood-debug',
 			properties: {
+				session: {
+					type: String,
+				},
 				events: {
 					type: Array,
 					value: () => {
@@ -33,14 +36,15 @@
 				const addr = (
 					protocol +
 					window.location.host +
-					'/otree/redwood/debug/');
+					'/redwood/events/session/' + this.session);
 				this.socket = new ReconnectingWebSocket(addr, null, {
 					timeoutInterval: 10000
 				});
 				this.socket.onerror = this.onError.bind(this);
 				this.socket.onmessage = this.onMessage.bind(this);
-				$.getJSON('/redwood-events/').done((events) => {
+				$.getJSON('/redwood/api/events/session/' + this.session).done((events) => {
 					this.set('events', events);
+					window.requestAnimationFrame(this._update.bind(this));
 				});
 
 				this.graph = Highcharts.chart({
@@ -51,9 +55,9 @@
 						height: this.offsetHeight
 					},
 					title: { text: null },
-					exporting: { enabled: false },
-					tooltip: { enabled: false },
-					legend: { enabled: false },
+					exporting: { enabled: true },
+					tooltip: { enabled: true },
+					legend: { enabled: true },
 					credits: { enabled: false },
 					xAxis: {
 						type: 'datetime',
@@ -62,16 +66,13 @@
 						}
 					},
 					yAxis: {
-						title: { text: undefined },
-						min: 0,
-						max: 1
+						title: { text: '' },
 					},
 					plotOptions: {
-						line: {marker: {enabled: false}},
 						series: {
 							states: {
 								hover: {
-									enabled: false,
+									enabled: true,
 								}
 							}
 						}
@@ -85,12 +86,14 @@
 							}
 						}
 					},
-					series: [{
-						data: [],
-					}]
+					series: [
+						{
+							name: 'Total Events Per Second',
+							type: 'area',
+							data: [],
+						},
+					]
 				});
-
-				window.requestAnimationFrame(this._update.bind(this));
 			},
 			onError(err) {
 				console.error(err);
@@ -100,14 +103,32 @@
 				this.events.push(event);
 			},
 			_update() {
-				const eventDataset = [];
+				let bucketStartTime = this.events[0].timestamp;
+				const bucketSize = 1000; // 1 seconds, in millis
+				const buckets = [];
+				buckets.push([bucketStartTime, 0]);
 				for (let i = 0; i < this.events.length; i++) {
 					const e = this.events[i];
-					if (e.channel == 'decisions') {
-						eventDataset.push([e.timestamp, e.value]);
+					if (e.channel == 'state') {
+						this.graph.xAxis[0].addPlotBand({
+							value: e.timestamp,
+							width: 1,
+							color: 'blue',
+							label: {
+								text: e.value,
+								layout: 'vertical',
+							}
+						});
 					}
+					while (e.timestamp - bucketStartTime > bucketSize) {
+						bucketStartTime += bucketSize;
+						buckets.push([bucketStartTime, 0]);
+					}
+					buckets[buckets.length-1][1] += 1;
 				}
-				this.graph.series[0].setData(eventDataset);
+				// Remove the last bucket because it still might be collecting events.
+				buckets.splice(buckets.length-1, 1);
+				this.graph.series[0].setData(buckets);
 				window.requestAnimationFrame(this._update.bind(this));
 			}
 		});

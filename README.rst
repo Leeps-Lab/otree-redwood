@@ -42,3 +42,9 @@ Upgrading
 ---------
 
     pip install -U otreechat
+
+TODO
+----
+Awesome debugging - watch events live in otree-redwood-debug, filter events
+by group, participant, channel, and values. Save and replay events into the
+otree-events component.

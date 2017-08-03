@@ -51,6 +51,13 @@ def get_cached_participant(participant_code):
 
 
 class EventConsumer(WebsocketConsumer):
+    
+    url_pattern = (
+        r'^/redwood' +
+        '/app-name/(?P<app_name>[^/]+)'
+        '/group/(?P<group>[0-9]+)' +
+        '/participant/(?P<participant_code>[a-zA-Z0-9_-]+)' +
+        '/$')
 
     def connection_groups(self, **kwargs):
         """
@@ -123,14 +130,16 @@ class EventConsumer(WebsocketConsumer):
         self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
 
 
-class DebugEventWatcher(WebsocketConsumer):
+class EventWatcher(WebsocketConsumer):
+
+    url_pattern = r'^/redwood/events/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
 
     def connection_groups(self, **kwargs):
         """
         Called to return the list of groups to automatically add/remove
         this connection to/from.
         """
-        return ['debug']
+        return ['events-' + kwargs['session_code']]
 
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
@@ -138,7 +147,7 @@ class DebugEventWatcher(WebsocketConsumer):
 
 @django.dispatch.receiver(post_save, sender=Event)
 def on_event_save(sender, instance, **kwargs):
-    Group('debug').send({'text': json.dumps(instance.message)})
+    Group('events-' + instance.group.session.code).send({'text': json.dumps(instance.message)})
 
 
 def send(group, channel, payload):

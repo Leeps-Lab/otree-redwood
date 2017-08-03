@@ -22,7 +22,7 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
 
     class ExportCSV(vanilla.View):
 
-        url_name = 'otree_redwood_export_{}'.format(app_name)
+        url_name = 'redwood_export_{}'.format(app_name)
         url_pattern = '^{}/$'.format(url_name)
         app_name = app_name
         display_name = display_name
@@ -59,18 +59,21 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
 
 class EventsJsonAPI(vanilla.ListView):
 
-    url_name = 'otree_redwood_events'
-    url_pattern = r"^redwood-events/$"
+    url_name = 'redwood_events'
+    url_pattern = r'^redwood/api/events/session/(?P<session_code>[a-zA-Z0-9_-]+)$'
     model = Event
 
     def render_to_response(self, context):
-        return JsonResponse([e.message for e in Event.objects.all()], safe=False)
+        # TODO: This is broken because group is a GenericForeignKey
+        return JsonResponse([
+            e.message for e in Event.objects.filter(group__session__code=self.kwargs['session_code'])
+        ], safe=False)
 
 
 class DebugView(vanilla.TemplateView):
 
-    url_name = 'otree_redwood_debug'
-    url_pattern = r"^redwood-debug/$"
+    url_name = 'redwood_debug'
+    url_pattern = r'^redwood/debug/session/(?P<session_code>[a-zA-Z0-9_-]+)$'
     template_name = 'otree_redwood/Debug.html'
 
     def get_context_data(self, **kwargs):
@@ -80,6 +83,7 @@ class DebugView(vanilla.TemplateView):
             mean = sum(values) / len(values)
             context['contexts'][key] = mean
         context['connected_participants'] = Connection.objects.all()
+        context['session_code'] = self.kwargs['session_code']
         return context
 
  
