@@ -2,15 +2,36 @@
 	rel="import"
 	href="/static/bower_components/polymer/polymer.html" />
 
+<link
+	rel="import"
+	href="/static/bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
 
 <dom-module id="otree-redwood-debug">
 
 	<template>
 		<style>
 			:host {
-				display: block;
+				display: flex;
+				flex-direction: column;
+			}
+			#chart {
+				min-height: 400px;
 			}
 		</style>
+		<style include="iron-flex iron-flex-alignment"></style>
+		<div class="layout horizontal">
+			<select name="appName" value="{{ selectedApp::change }}">
+				<template is="dom-repeat" items="[[apps]]">
+					<option value="[[item]]">[[item]]</option>
+				</template>
+			</select>
+			<select name="groups" value="{{ selectedGroup::change }}">
+				<template is="dom-repeat" items="[[groups]]">
+					<option value="[[item]]">[[item]]</option>
+				</template>
+			</select>
+		</div>
 		<div id="chart"></div>
 	</template>
 
@@ -21,11 +42,31 @@
 				session: {
 					type: String,
 				},
-				events: {
+				eventsByAppNameThenGroup: {
+					type: Object,
+				},
+				apps: {
 					type: Array,
 					value: () => {
 						return [];
 					}
+				},
+				groups: {
+					type: Array,
+					value: () => {
+						return [];
+					}
+				},
+				selectedApp: {
+					type: String,
+				},
+				selectedGroup: {
+					type: String,
+				},
+				events: {
+					type: Array,
+					value: () => { return [] },
+					computed: '_computeEvents(eventsByAppNameThenGroup, selectedApp, selectedGroup)'
 				}
 			},
 			ready() {
@@ -42,12 +83,8 @@
 				});
 				this.socket.onerror = this.onError.bind(this);
 				this.socket.onmessage = this.onMessage.bind(this);
-				$.getJSON('/redwood/api/events/session/' + this.session).done((events) => {
-					this.set('events', events);
-					window.requestAnimationFrame(this._update.bind(this));
-				});
 
-				this.graph = Highcharts.chart({
+				this.chart = Highcharts.chart({
 					chart: {
 						animation: true,
 						renderTo: this.$.chart,
@@ -88,12 +125,17 @@
 					},
 					series: [
 						{
-							name: 'Total Events Per Second',
+							name: 'Events Per Second',
 							type: 'area',
 							data: [],
 						},
 					]
 				});
+
+				if (this.session) {
+					$.getJSON('/redwood/api/events/session/' + this.session + '/')
+					.done(this._initEvents.bind(this));
+				}
 			},
 			onError(err) {
 				console.error(err);
@@ -102,15 +144,32 @@
 				const event = JSON.parse(message.data);
 				this.events.push(event);
 			},
+			_initEvents(eventsByAppNameThenGroup) {
+				this.apps = [];
+				this.groups = [];
+				for (const appName in eventsByAppNameThenGroup) {
+					this.push('apps', appName);
+					for (const group in eventsByAppNameThenGroup[appName]) {
+						this.push('groups', group);
+					}
+				}
+				this.eventsByAppNameThenGroup = eventsByAppNameThenGroup;
+				this.selectedApp = this.apps[0];
+				this.selectedGroup = this.groups[0];
+				window.requestAnimationFrame(this._update.bind(this));
+			},
+			_computeEvents(eventsByAppNameThenGroup, selectedApp, selectedGroup) {
+				return eventsByAppNameThenGroup[selectedApp][selectedGroup];
+			},
 			_update() {
-				let bucketStartTime = this.events[0].timestamp;
+				let bucketStartTime = this.events.length? this.events[0].timestamp : Date.now();
 				const bucketSize = 1000; // 1 seconds, in millis
 				const buckets = [];
 				buckets.push([bucketStartTime, 0]);
 				for (let i = 0; i < this.events.length; i++) {
 					const e = this.events[i];
 					if (e.channel == 'state') {
-						this.graph.xAxis[0].addPlotBand({
+						this.chart.xAxis[0].addPlotBand({
 							value: e.timestamp,
 							width: 1,
 							color: 'blue',
@@ -128,7 +187,7 @@
 				}
 				// Remove the last bucket because it still might be collecting events.
 				buckets.splice(buckets.length-1, 1);
-				this.graph.series[0].setData(buckets);
+				this.chart.series[0].setData(buckets);
 				window.requestAnimationFrame(this._update.bind(this));
 			}
 		});

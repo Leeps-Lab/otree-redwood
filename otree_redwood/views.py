@@ -1,3 +1,4 @@
+from collections import defaultdict
 import csv
 import datetime
 import functools
@@ -60,20 +61,30 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
 class EventsJsonAPI(vanilla.ListView):
 
     url_name = 'redwood_events'
-    url_pattern = r'^redwood/api/events/session/(?P<session_code>[a-zA-Z0-9_-]+)$'
+    url_pattern = r'^redwood/api/events/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
     model = Event
 
     def render_to_response(self, context):
-        # TODO: This is broken because group is a GenericForeignKey
-        return JsonResponse([
-            e.message for e in Event.objects.filter(group__session__code=self.kwargs['session_code'])
-        ], safe=False)
+        session = Session.objects.get(code=self.kwargs['session_code'])
+        events_by_app_name_then_group = defaultdict(lambda: {})
+        for session_config in SESSION_CONFIGS_DICT.values():
+            app_name = session_config['name']
+            try:
+                groups_query = getattr(session, app_name + '_group')
+            except AttributeError:
+                continue
+            groups = list(groups_query.all())
+            if groups:
+                for group in groups:
+                    events = Event.objects.filter(group_pk=group.pk)
+                    events_by_app_name_then_group[app_name][group.pk] = [e.message for e in events]
+        return JsonResponse(events_by_app_name_then_group, safe=False)
 
 
 class DebugView(vanilla.TemplateView):
 
     url_name = 'redwood_debug'
-    url_pattern = r'^redwood/debug/session/(?P<session_code>[a-zA-Z0-9_-]+)$'
+    url_pattern = r'^redwood/debug/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
     template_name = 'otree_redwood/Debug.html'
 
     def get_context_data(self, **kwargs):

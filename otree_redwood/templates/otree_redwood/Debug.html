@@ -11,27 +11,32 @@
 
 {% block content %}
 
-<table>
-	<tr>
-		<th>Context</th>
-		<th>Time (ms)</th>
-	</tr>
-	{% for k, v in contexts.items %}
+<div style="display: flex; flex-direction: column">
+	<table>
 		<tr>
-			<td>{{ k }}</td>
-			<td>{% widthratio v 1 1000 %}</td>
+			<th>Context</th>
+			<th>Time (ms)</th>
 		</tr>
+		{% for k, v in contexts.items %}
+			<tr>
+				<td>{{ k }}</td>
+				<td>{% widthratio v 1 1000 %}</td>
+			</tr>
+		{% endfor %}
+	</table>
+
+	<p>
+	<ul>
+	{% for connection in connected_participants %}
+		<li>{{ connection.participant_code }}</li>
 	{% endfor %}
-</table>
+	</ul>
+	</p>
 
-<p>
-<ul>
-{% for connection in connected_participants %}
-	<li>{{ connection.participant_code }}</li>
-{% endfor %}
-</ul>
-</p>
+	<otree-redwood-debug
+		session="{{ session_code }}">
+	</otree-redwood-debug>
 
-<otree-redwood-debug session="{{ session_code }}" width="800" height="300"></otree-redwood-debug>
+</div>
 
 {% endblock %}
