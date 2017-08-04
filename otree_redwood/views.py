@@ -60,7 +60,7 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
 
 class EventsJsonAPI(vanilla.ListView):
 
-    url_name = 'redwood_events'
+    url_name = 'redwood_events_json_api'
     url_pattern = r'^redwood/api/events/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
     model = Event
 

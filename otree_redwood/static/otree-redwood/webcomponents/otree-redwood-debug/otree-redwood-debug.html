@@ -7,6 +7,11 @@
 	href="/static/bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 
 
+<!--
+`otree-redwood-debug` is ...
+
+TODO: replay events, show current time in graph during replay
+-->
 <dom-module id="otree-redwood-debug">
 
 	<template>
@@ -21,16 +26,26 @@
 		</style>
 		<style include="iron-flex iron-flex-alignment"></style>
 		<div class="layout horizontal">
-			<select name="appName" value="{{ selectedApp::change }}">
+			<input
+				type="text"
+				value="{{ session::change }}"
+				placeholder="Session Code"
+				disabled$="[[ loading ]]">
+			<select name="appName" value="{{ app::change }}">
 				<template is="dom-repeat" items="[[apps]]">
 					<option value="[[item]]">[[item]]</option>
 				</template>
 			</select>
-			<select name="groups" value="{{ selectedGroup::change }}">
+			<select name="groups" value="{{ group::change }}">
 				<template is="dom-repeat" items="[[groups]]">
 					<option value="[[item]]">[[item]]</option>
 				</template>
 			</select>
+		</div>
+		<div class="layout horizontal">
+			<button on-tap="_play" hidden$="[[ _hidePlayButton(playing, paused) ]]">Play</button>
+			<button on-tap="_pause" hidden$="[[ _hidePauseButton(playing, paused) ]]">Pause</button>
+			<button on-tap="_stop" hidden$="[[ _hideStopButton(playing, paused) ]]">Stop</button>
 		</div>
 		<div id="chart"></div>
 	</template>
@@ -39,9 +54,6 @@
 		Polymer({
 			is: 'otree-redwood-debug',
 			properties: {
-				session: {
-					type: String,
-				},
 				eventsByAppNameThenGroup: {
 					type: Object,
 				},
@@ -57,19 +69,36 @@
 						return [];
 					}
 				},
-				selectedApp: {
+				session: {
+					type: String,
+					observer: '_onSessionChanged',
+				},
+				app: {
 					type: String,
 				},
-				selectedGroup: {
+				group: {
 					type: String,
 				},
 				events: {
 					type: Array,
 					value: () => { return [] },
-					computed: '_computeEvents(eventsByAppNameThenGroup, selectedApp, selectedGroup)'
-				}
+					computed: '_computeEvents(eventsByAppNameThenGroup, app, group)'
+				},
+				loading: {
+					type: Boolean,
+					value: false
+				},
+				playing: {
+					type: Boolean,
+					value: false,
+				},
+				paused: {
+					type: Boolean,
+					value: false,
+				},
 			},
-			ready() {
+			attached() {
+				/*
 				let protocol = 'ws://';
 				if (window.location.protocol === 'https:') {
 					protocol = 'wss://';
@@ -83,6 +112,7 @@
 				});
 				this.socket.onerror = this.onError.bind(this);
 				this.socket.onmessage = this.onMessage.bind(this);
+				*/
 
 				this.chart = Highcharts.chart({
 					chart: {
@@ -131,11 +161,6 @@
 						},
 					]
 				});
-
-				if (this.session) {
-					$.getJSON('/redwood/api/events/session/' + this.session + '/')
-					.done(this._initEvents.bind(this));
-				}
 			},
 			onError(err) {
 				console.error(err);
@@ -143,6 +168,16 @@
 			onMessage(message) {
 				const event = JSON.parse(message.data);
 				this.events.push(event);
+			},
+			_onSessionChanged() {
+				if (this.session) {
+					this.loading = true;
+					$.getJSON('/redwood/api/events/session/' + this.session + '/')
+					.done(this._initEvents.bind(this))
+					.always(() => {
+						this.loading = false;
+					});
+				}
 			},
 			_initEvents(eventsByAppNameThenGroup) {
 				this.apps = [];
@@ -154,14 +189,15 @@
 					}
 				}
 				this.eventsByAppNameThenGroup = eventsByAppNameThenGroup;
-				this.selectedApp = this.apps[0];
-				this.selectedGroup = this.groups[0];
-				window.requestAnimationFrame(this._update.bind(this));
+				this.app = this.apps[0];
+				this.group = this.groups[0];
+				window.requestAnimationFrame(this._redrawChart.bind(this));
 			},
-			_computeEvents(eventsByAppNameThenGroup, selectedApp, selectedGroup) {
-				return eventsByAppNameThenGroup[selectedApp][selectedGroup];
+			_computeEvents(eventsByAppNameThenGroup, app, group) {
+				window.requestAnimationFrame(this._redrawChart.bind(this));
+				return eventsByAppNameThenGroup[app][group];
 			},
-			_update() {
+			_redrawChart() {
 				let bucketStartTime = this.events.length? this.events[0].timestamp : Date.now();
 				const bucketSize = 1000; // 1 seconds, in millis
 				const buckets = [];
@@ -188,8 +224,61 @@
 				// Remove the last bucket because it still might be collecting events.
 				buckets.splice(buckets.length-1, 1);
 				this.chart.series[0].setData(buckets);
-				window.requestAnimationFrame(this._update.bind(this));
-			}
+			},
+			_tickReplay() {
+				if (!this.playing) {
+					return;
+				}
+				if (this.paused) {
+					window.setTimeout(this._tickReplay.bind(this), 100);
+					return;
+				}
+				const currEvent = this.events[this.currEventIndex];
+				this.currTimeBand.options.value = currEvent.timestamp;
+				this.currTimeBand.render();
+				if (this.currEventIndex+1 >= this.events.length) {
+					this._stop();
+					return;
+				}
+				const nextEvent = this.events[this.currEventIndex+1];
+				const delta = nextEvent.timestamp -currEvent.timestamp;
+				this.currEventIndex += 1;
+				window.setTimeout(this._tickReplay.bind(this), delta);
+			},
+			_hidePlayButton(playing, paused) {
+				return playing && !paused;
+			},
+			_hidePauseButton(playing, paused) {
+				return !playing || paused;
+			},
+			_hideStopButton(playing, paused) {
+				return !playing;
+			},
+			_play() {
+				if (!this.playing) {
+					this.playing = true;
+					this.currEventIndex = 0;
+					this.currTimeBand = this.chart.xAxis[0].addPlotBand({
+						value: this.events[0].timestamp,
+						width: 1,
+						color: 'green',
+						label: {
+							text: '',
+							layout: 'vertical',
+						},
+					});
+					this._tickReplay();
+				}
+				this.paused = false;
+			},
+			_pause() {
+				this.paused = true;
+			},
+			_stop() {
+				this.currTimeBand.destroy();
+				this.playing = false;
+				this.paused = false;
+			},
 		});
 	</script>
 
