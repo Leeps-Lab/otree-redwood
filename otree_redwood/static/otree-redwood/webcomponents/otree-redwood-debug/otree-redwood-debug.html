@@ -8,9 +8,7 @@
 
 
 <!--
-`otree-redwood-debug` is ...
-
-TODO: replay events, show current time in graph during replay
+`otree-redwood-debug` is ...TODO
 -->
 <dom-module id="otree-redwood-debug">
 
@@ -46,11 +44,37 @@ TODO: replay events, show current time in graph during replay
 			<button on-tap="_play" hidden$="[[ _hidePlayButton(playing, paused) ]]">Play</button>
 			<button on-tap="_pause" hidden$="[[ _hidePauseButton(playing, paused) ]]">Pause</button>
 			<button on-tap="_stop" hidden$="[[ _hideStopButton(playing, paused) ]]">Stop</button>
+			<span>Elapsed: [[ _displayElapsedTime(elapsedTime) ]]</span>
 		</div>
 		<div id="chart"></div>
 	</template>
 
 	<script>
+        class ReconnectingWebSocket {
+            constructor() {
+                setTimeout(() => { this.readyState = 1; this.onopen(); }, 1000);
+            }
+            onopen() {
+            	console.log('mock onopen called');
+            }
+            onmessage(msg) {
+            	console.log('mock msg called:', msg);
+            }
+            onerror() {
+            	console.log('mock onerror called');
+            }
+            onclose() {
+            	console.log('mock onclose called');
+            }
+            send(msg) {
+                event = JSON.parse(msg);
+                if (event.channel == 'echo') {
+                    this.onmessage({
+                        data: JSON.stringify(event)
+                    });
+                }
+            }
+        }
 		Polymer({
 			is: 'otree-redwood-debug',
 			properties: {
@@ -96,24 +120,12 @@ TODO: replay events, show current time in graph during replay
 					type: Boolean,
 					value: false,
 				},
+				elapsedTime: {
+					type: Number,
+					value: 0,
+				}
 			},
 			attached() {
-				/*
-				let protocol = 'ws://';
-				if (window.location.protocol === 'https:') {
-					protocol = 'wss://';
-				}
-				const addr = (
-					protocol +
-					window.location.host +
-					'/redwood/events/session/' + this.session);
-				this.socket = new ReconnectingWebSocket(addr, null, {
-					timeoutInterval: 10000
-				});
-				this.socket.onerror = this.onError.bind(this);
-				this.socket.onmessage = this.onMessage.bind(this);
-				*/
-
 				this.chart = Highcharts.chart({
 					chart: {
 						animation: true,
@@ -161,13 +173,6 @@ TODO: replay events, show current time in graph during replay
 						},
 					]
 				});
-			},
-			onError(err) {
-				console.error(err);
-			},
-			onMessage(message) {
-				const event = JSON.parse(message.data);
-				this.events.push(event);
 			},
 			_onSessionChanged() {
 				if (this.session) {
@@ -225,17 +230,24 @@ TODO: replay events, show current time in graph during replay
 				buckets.splice(buckets.length-1, 1);
 				this.chart.series[0].setData(buckets);
 			},
-			_tickReplay() {
+			_replayNextEvent() {
 				if (!this.playing) {
 					return;
 				}
 				if (this.paused) {
-					window.setTimeout(this._tickReplay.bind(this), 100);
+					window.setTimeout(this._replayNextEvent.bind(this), 10);
 					return;
 				}
 				const currEvent = this.events[this.currEventIndex];
+				socket.onmessage({
+					data: JSON.stringify({
+						channel: currEvent.channel,
+						payload: currEvent.value,
+					}),
+				});
 				this.currTimeBand.options.value = currEvent.timestamp;
 				this.currTimeBand.render();
+				this.elapsedTime = currEvent.timestamp - this.events[0].timestamp;
 				if (this.currEventIndex+1 >= this.events.length) {
 					this._stop();
 					return;
@@ -243,7 +255,10 @@ TODO: replay events, show current time in graph during replay
 				const nextEvent = this.events[this.currEventIndex+1];
 				const delta = nextEvent.timestamp -currEvent.timestamp;
 				this.currEventIndex += 1;
-				window.setTimeout(this._tickReplay.bind(this), delta);
+				window.setTimeout(this._replayNextEvent.bind(this), delta);
+			},
+			_displayElapsedTime(elapsedTime) {
+				return (elapsedTime / 1000).toFixed(1);
 			},
 			_hidePlayButton(playing, paused) {
 				return playing && !paused;
@@ -257,6 +272,7 @@ TODO: replay events, show current time in graph during replay
 			_play() {
 				if (!this.playing) {
 					this.playing = true;
+					this.elapsedTime = 0;
 					this.currEventIndex = 0;
 					this.currTimeBand = this.chart.xAxis[0].addPlotBand({
 						value: this.events[0].timestamp,
@@ -267,7 +283,7 @@ TODO: replay events, show current time in graph during replay
 							layout: 'vertical',
 						},
 					});
-					this._tickReplay();
+					this._replayNextEvent();
 				}
 				this.paused = false;
 			},
@@ -275,6 +291,7 @@ TODO: replay events, show current time in graph during replay
 				this.paused = true;
 			},
 			_stop() {
+				this.elapsedTime = 0;
 				this.currTimeBand.destroy();
 				this.playing = false;
 				this.paused = false;
