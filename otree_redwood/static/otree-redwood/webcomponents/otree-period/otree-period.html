@@ -10,18 +10,10 @@
 <dom-module id="otree-period">
 
 	<template>
-        <otree-constants id="constants"
-        	debug="{{ debug }}">
-        </otree-constants>
     	<otree-channel
     		channel="state"
     		on-event="_handleStateEvent">
 	    </otree-channel>
-        <template is="dom-if" if="[[ debug ]]">
-        	<div class="well">
-	        	<p>Running: [[ running ]]</p>
-        	</div>
-        </template>
 	</template>
 
 	<script>
