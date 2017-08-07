@@ -38,12 +38,14 @@
 				const state = event.detail.payload;
 				if (state == 'period_start') {
 					this.running = true;
+					this.fire('period-start');
 				}
 			},
 			_handlePeriodEndEvent(event) {
 				const state = event.detail.payload;
 				if (state == 'period_end') {
 					this.running = false;
+					this.fire('period-end');
 				}
 			}
 		});
