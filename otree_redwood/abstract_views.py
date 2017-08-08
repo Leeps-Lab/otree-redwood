@@ -5,7 +5,6 @@ from django.http.response import HttpResponseRedirect
 from django.utils import timezone
 from datetime import timedelta
 import json
-import logging
 import otree.common_internal
 from otree.api import Page as oTreePage
 from otree.views.abstract import global_lock
@@ -14,10 +13,7 @@ import threading
 import time
 
 from otree_redwood import consumers
-from otree_redwood.models import Event, Connection, RanPlayersReadyFunction
-
-
-logger = logging.getLogger('otree_redwood')
+from otree_redwood.models import Event, Connection 
 
 
 class Page(oTreePage):
@@ -58,8 +54,6 @@ class Page(oTreePage):
         if group.pk != self.group.pk:
             return
 
-        logger.debug('_on_connection_change: state={}, participant={}, group={}'.format(state, participant.code, group.pk))
-
         if state == 'disconnected' and participant.code == self.player.participant.code:
             self.when_player_disconnects()
             return
@@ -85,14 +79,11 @@ class Page(oTreePage):
                     group=self.group)
 
             if ready.ran:
-                logger.debug('_on_connection_change: already ran ready function')
                 return
             for player in self.group.get_players():
                 if Connection.objects.filter(participant_code=player.participant.code).count() == 0:
-                    logger.debug('_on_connection_change: not all players are connected, cannot run ready function yet')
                     return
                     
-            logger.debug('_on_connection_change: all players connected, running ready function')
             self.when_all_players_ready()
             ready.ran = True
             ready.save()

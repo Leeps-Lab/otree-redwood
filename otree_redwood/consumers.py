@@ -83,7 +83,7 @@ class EventConsumer(WebsocketConsumer):
         except IndexError:
             pass
         Connection.objects.get_or_create(participant_code=kwargs['participant_code'])
-        connection_signal.send(self.__class__, group=group, participant=participant, state='connected')
+        group._on_connect(participant)
 
     def disconnect(self, message, **kwargs):
         group = get_cached_group(kwargs['app_name'], kwargs['group'])
@@ -93,7 +93,7 @@ class EventConsumer(WebsocketConsumer):
             Connection.objects.get(participant_code=participant.code).delete()
         except Connection.DoesNotExist:
             pass
-        connection_signal.send(self.__class__, group=group, participant=participant, state='disconnected')
+        group._on_disconnect(participant)
 
     def raw_receive(self, message, **kwargs):
         content = json.loads(message['text'])
@@ -122,9 +122,9 @@ class EventConsumer(WebsocketConsumer):
                     channel=content['channel'],
                     value=content['payload'])
 
-            with track('sending signal'):
-                group_key = '{}-{}'.format(group.pk, content['channel'])
-                events_signals[group_key].send(self.__class__, event=event)
+            with track('handing event to group'):
+                event_handler = getattr(group, '_on_{}_event'.format(content['channel']))
+                event_handler(event)
 
     def send(self, content):
         self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
@@ -148,16 +148,3 @@ class EventWatcher(WebsocketConsumer):
 @django.dispatch.receiver(post_save, sender=Event)
 def on_event_save(sender, instance, **kwargs):
     Group('events-' + instance.group.session.code).send({'text': json.dumps(instance.message)})
-
-
-def send(group, channel, payload):
-    with track('send_channel=' + channel):
-        Event.objects.create(
-            group=group,
-            channel=channel,
-            value=payload)
-        Group(str(group.pk)).send(
-                {'text': json.dumps({
-                    'channel': channel,
-                    'payload': payload
-                })})
