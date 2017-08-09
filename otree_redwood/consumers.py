@@ -31,23 +31,10 @@ def disconnect(watcher):
         events_signals[group_key].disconnect(receiver)
 
 
-def get_cached_group(app_name, group_pk):
-    with track('trying to fetch group from cache') as obs:
-        group = cache.get(group_pk)
-        if not group:
-            models_module = importlib.import_module('{}.models'.format(app_name))
-            group = models_module.Group.objects.get(pk=group_pk)
-            cache.set(group_pk, group)
-    return group
-
-
-def get_cached_participant(participant_code):
-    with track('trying to fetch participant from cache') as obs:
-        participant = cache.get(participant_code)
-        if not participant:
-            participant = Participant.objects.get(code=participant_code)
-            cache.set(participant_code, participant)
-    return participant
+def get_group(app_name, group_pk):
+    with track('fetch group') as obs:
+        models_module = importlib.import_module('{}.models'.format(app_name))
+        return models_module.Group.objects.get(pk=group_pk)
 
 
 class EventConsumer(WebsocketConsumer):
@@ -69,8 +56,8 @@ class EventConsumer(WebsocketConsumer):
     def connect(self, message, **kwargs):
         self.message.reply_channel.send({'accept': True})
 
-        group = get_cached_group(kwargs['app_name'], kwargs['group'])
-        participant = get_cached_participant(kwargs['participant_code'])
+        group = get_group(kwargs['app_name'], kwargs['group'])
+        participant = Participant.objects.get(code=kwargs['participant_code'])
         try:
             last_state = Event.objects.filter(
                     channel='state',
@@ -82,15 +69,15 @@ class EventConsumer(WebsocketConsumer):
             })
         except IndexError:
             pass
-        Connection.objects.get_or_create(participant_code=kwargs['participant_code'])
+        Connection.objects.get_or_create(participant=participant)
         group._on_connect(participant)
 
     def disconnect(self, message, **kwargs):
-        group = get_cached_group(kwargs['app_name'], kwargs['group'])
-        participant = get_cached_participant(kwargs['participant_code'])
+        group = get_group(kwargs['app_name'], kwargs['group'])
+        participant = Participant.objects.get(code=kwargs['participant_code'])
         try:
             # TODO: Clean out stale connections if not terminated cleanly.
-            Connection.objects.get(participant_code=participant.code).delete()
+            Connection.objects.get(participant=participant).delete()
         except Connection.DoesNotExist:
             pass
         group._on_disconnect(participant)
@@ -112,8 +99,8 @@ class EventConsumer(WebsocketConsumer):
                 return
 
         with track('recv_channel=' + content['channel']):
-            group = get_cached_group(kwargs['app_name'], kwargs['group'])
-            participant = get_cached_participant(kwargs['participant_code'])
+            group = get_group(kwargs['app_name'], kwargs['group'])
+            participant = Participant.objects.get(code=kwargs['participant_code'])
             # TODO: Look into saving events async in another thread.
             with track('saving event object to database'):
                 event = Event.objects.create(

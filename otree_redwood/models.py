@@ -4,8 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.db import models
 import json
+from jsonfield import JSONField
 import otree.common_internal
-from otree.db.serializedfields import JSONField
 from otree.models import BaseGroup
 from otree.views.abstract import global_lock
 import redis_lock
@@ -48,7 +48,10 @@ class Event(models.Model):
 
 
 class Connection(models.Model):
-    participant_code = models.CharField(max_length=10, null=False)
+    participant = models.ForeignKey(
+        'otree.Participant',
+        related_name='+',
+        null=True)
 
 
 class Group(BaseGroup):
@@ -80,6 +83,7 @@ class Group(BaseGroup):
         pass
 
     def _on_connect(self, participant):
+        print('_on_connect')
         if otree.common_internal.USE_REDIS:
             lock = redis_lock.Lock(
                 otree.common_internal.get_redis_conn(),
@@ -93,7 +97,7 @@ class Group(BaseGroup):
             if self.ran_ready_function:
                 return
             for player in self.get_players():
-                if Connection.objects.filter(participant_code=player.participant.code).count() == 0:
+                if Connection.objects.filter(participant__code=player.participant.code).count() == 0:
                     return
                     
             self.when_all_players_ready()
@@ -128,7 +132,10 @@ class ContinuousDecisionGroup(Group):
     class Meta:
         abstract = True
 
+    group_decisions = JSONField(null=True)
+
     def when_all_players_ready(self):
+        print('all players ready')
         self.group_decisions = {}
         start_time = timezone.now()
         for player in self.get_players():
@@ -142,6 +149,8 @@ class ContinuousDecisionGroup(Group):
             self.group_decisions[d.participant.code] = d.value
 
             d.save()
+        print(self.group_decisions)
+        self.save()
         self.send('group_decisions', self.group_decisions)
 
     def initial_decision(self):
@@ -150,8 +159,10 @@ class ContinuousDecisionGroup(Group):
         return None
 
     def _on_decisions_event(self, event=None, **kwargs):
-        if hasattr(self, 'group_decisions'):
-            self.group_decisions[event.participant.code] = event.value
-            self.send('group_decisions', self.group_decisions)
-        else:
-            print('no group decisions attr')
+        print('_on_decisions_event')
+        if not self.ran_ready_function:
+            print('ignoring decision event sent before period start')
+            return
+        self.group_decisions[event.participant.code] = event.value
+        self.save()
+        self.send('group_decisions', self.group_decisions)
