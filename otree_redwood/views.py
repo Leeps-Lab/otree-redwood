@@ -1,22 +1,16 @@
 from collections import defaultdict
 import csv
 import datetime
-import functools
 from importlib import import_module
-import json
-import math
-import operator
 import vanilla
 
 from django.http import HttpResponse, JsonResponse
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 
 from otree.models import Session
 from otree.session import SESSION_CONFIGS_DICT
-from otree_redwood import consumers, stats
+from otree_redwood import stats
 from otree_redwood.models import Event, Connection
-from otree_redwood.abstract_views import output_functions
 
 
 def AppSpecificExportCSV(app_name, display_name, get_output_table):

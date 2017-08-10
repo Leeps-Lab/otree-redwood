@@ -1,8 +1,6 @@
-from channels import Channel, Group
+from channels import Group
 from channels.generic.websockets import WebsocketConsumer
-from collections import defaultdict
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
 from django.db.models.signals import post_save
 import django.dispatch
 import importlib
@@ -11,24 +9,6 @@ from otree.models.participant import Participant
 
 from otree_redwood.models import Event, Connection
 from otree_redwood.stats import track 
-
-
-connection_signal = django.dispatch.Signal(providing_args=['group', 'participant', 'state'])
-events_signals = defaultdict(lambda: django.dispatch.Signal(providing_args=['event']))
-
-
-def connect(group, channel, receiver):
-    group_key = '{}-{}'.format(group.pk, channel)
-    if group_key not in events_signals:
-        events_signals[group_key].connect(receiver, weak=False)
-        return (group_key, receiver)
-    return None
-
-
-def disconnect(watcher):
-    if watcher:
-        group_key, receiver = watcher
-        events_signals[group_key].disconnect(receiver)
 
 
 def get_group(app_name, group_pk):
@@ -101,7 +81,6 @@ class EventConsumer(WebsocketConsumer):
         with track('recv_channel=' + content['channel']):
             group = get_group(kwargs['app_name'], kwargs['group'])
             participant = Participant.objects.get(code=kwargs['participant_code'])
-            # TODO: Look into saving events async in another thread.
             with track('saving event object to database'):
                 event = Event.objects.create(
                     group=group,

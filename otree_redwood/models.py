@@ -1,5 +1,5 @@
 from channels import Group as ChannelGroup
-from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.db import models
@@ -76,11 +76,9 @@ class Group(BaseGroup):
         """Implement this to perform an action for the group once
         all players are ready.
         """
-        pass
 
     def when_player_disconnects(self):
         """Implement this to perform an action when a player disconnects."""
-        pass
 
     def _on_connect(self, participant):
         print('_on_connect')
@@ -135,7 +133,6 @@ class ContinuousDecisionGroup(Group):
     group_decisions = JSONField(null=True)
 
     def when_all_players_ready(self):
-        print('all players ready')
         self.group_decisions = {}
         start_time = timezone.now()
         for player in self.get_players():
@@ -149,20 +146,14 @@ class ContinuousDecisionGroup(Group):
             self.group_decisions[d.participant.code] = d.value
 
             d.save()
-        print(self.group_decisions)
         self.save()
         self.send('group_decisions', self.group_decisions)
 
     def initial_decision(self):
-        """Implement this to give the players an initial decision.
-        """
+        """Implement this to give the players an initial decision."""
         return None
 
     def _on_decisions_event(self, event=None, **kwargs):
-        print('_on_decisions_event')
-        if not self.ran_ready_function:
-            print('ignoring decision event sent before period start')
-            return
         self.group_decisions[event.participant.code] = event.value
         self.save()
         self.send('group_decisions', self.group_decisions)
