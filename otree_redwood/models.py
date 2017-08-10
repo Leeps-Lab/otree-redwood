@@ -8,6 +8,7 @@ from jsonfield import JSONField
 import otree.common_internal
 from otree.models import BaseGroup
 from otree.views.abstract import global_lock
+from otree_redwood.stats import track 
 import redis_lock
 import threading
 import time
@@ -81,11 +82,10 @@ class Group(BaseGroup):
         """Implement this to perform an action when a player disconnects."""
 
     def _on_connect(self, participant):
-        print('_on_connect')
         if otree.common_internal.USE_REDIS:
             lock = redis_lock.Lock(
                 otree.common_internal.get_redis_conn(),
-                '{}-{}'.format(self.session.pk, self.id_in_subsession),
+                '{}-{}'.format(self.session.pk, self.pk),
                 expire=60,
                 auto_renewal=True)
         else:
@@ -114,15 +114,17 @@ class Group(BaseGroup):
         self.when_player_disconnects()
 
     def send(self, channel, payload):
-        Event.objects.create(
-            group=self,
-            channel=channel,
-            value=payload)
-        ChannelGroup(str(self.pk)).send(
-                {'text': json.dumps({
-                    'channel': channel,
-                    'payload': payload
-                })})
+        with track('send_channel=' + channel):
+            with track('create event'):
+                Event.objects.create(
+                    group=self,
+                    channel=channel,
+                    value=payload)
+            ChannelGroup(str(self.pk)).send(
+                    {'text': json.dumps({
+                        'channel': channel,
+                        'payload': payload
+                    })})
 
 
 class ContinuousDecisionGroup(Group):
@@ -154,6 +156,9 @@ class ContinuousDecisionGroup(Group):
         return None
 
     def _on_decisions_event(self, event=None, **kwargs):
-        self.group_decisions[event.participant.code] = event.value
-        self.save()
-        self.send('group_decisions', self.group_decisions)
+        if not self.group_decisions:
+            return
+        with track('_on_decisions_event'):
+            self.group_decisions[event.participant.code] = event.value
+            self.save()
+            self.send('group_decisions', self.group_decisions)
