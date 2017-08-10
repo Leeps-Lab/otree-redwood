@@ -14,13 +14,13 @@
 <div style="display: flex; flex-direction: column">
 	<table>
 		<tr>
-			<th>Context</th>
-			<th>Time (ms)</th>
+			<th>Tracking Context</th>
+			<th>Mean Time (ms)</th>
 		</tr>
-		{% for k, v in contexts.items %}
+		{% for tracking_context, metric in stats.items %}
 			<tr>
-				<td>{{ k }}</td>
-				<td>{% widthratio v 1 1000 %}</td>
+				<td>{{ tracking_context }}</td>
+				<td>{% widthratio metric.mean 1 1000 %}</td>
 			</tr>
 		{% endfor %}
 	</table>

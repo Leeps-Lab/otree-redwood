@@ -36,5 +36,6 @@ setup(
         'channels>=1.1.3,<2',
         'daphne>=1.0.0,<2',
         'jsonfield>=2,<3',
+        'mockredispy>=2.9<3',
     ]
 )

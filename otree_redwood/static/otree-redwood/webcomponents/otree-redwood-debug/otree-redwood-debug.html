@@ -29,6 +29,7 @@
 				value="{{ session::change }}"
 				placeholder="Session Code"
 				disabled$="[[ loading ]]">
+			<button on-tap="_loadSessionEvents">Load</button>
 			<select name="appName" value="{{ app::change }}">
 				<template is="dom-repeat" items="[[apps]]">
 					<option value="[[item]]">[[item]]</option>
@@ -95,7 +96,6 @@
 				},
 				session: {
 					type: String,
-					observer: '_onSessionChanged',
 				},
 				app: {
 					type: String,
@@ -174,7 +174,7 @@
 					]
 				});
 			},
-			_onSessionChanged() {
+			_loadSessionEvents() {
 				if (this.session) {
 					this.loading = true;
 					$.getJSON('/redwood/api/events/session/' + this.session + '/')

@@ -83,10 +83,7 @@ class DebugView(vanilla.TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['contexts'] = {}
-        for key, values in stats.observations.items():
-            mean = sum(values) / len(values)
-            context['contexts'][key] = mean
+        context['stats'] = stats.items()
         context['connected_participants'] = Connection.objects.all()
         context['session_code'] = self.kwargs['session_code']
         return context
