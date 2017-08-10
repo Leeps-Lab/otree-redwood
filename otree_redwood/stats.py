@@ -25,11 +25,15 @@ class track():
 
     def __exit__(self, type, value, traceback):
         elapsed_time = float(time.time() - self.start)
-        key = 'redwood-{}'.format(self.context)
-        redis.hset(key, 'tracking_context', self.context)
-        redis.hincrbyfloat(key, 'sum', elapsed_time)
-        redis.hincrbyfloat(key, 'count', 1)
-        redis.sadd('redwood-tracking-contexts', key)
+        update(self.context, elapsed_time)
+
+
+def update(context, value):
+    key = 'redwood-{}'.format(context)
+    redis.hset(key, 'tracking_context', context)
+    redis.hincrbyfloat(key, 'sum', value)
+    redis.hincrbyfloat(key, 'count', 1)
+    redis.sadd('redwood-tracking-contexts', key)
 
 
 def items():

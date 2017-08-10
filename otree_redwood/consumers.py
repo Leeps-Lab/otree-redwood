@@ -8,11 +8,11 @@ import json
 from otree.models.participant import Participant
 
 from otree_redwood.models import Event, Connection
-from otree_redwood.stats import track 
+from otree_redwood import stats
 
 
 def get_group(app_name, group_pk):
-    with track('fetch group') as obs:
+    with stats.track('fetch group') as obs:
         models_module = importlib.import_module('{}.models'.format(app_name))
         return models_module.Group.objects.get(pk=group_pk)
 
@@ -67,28 +67,27 @@ class EventConsumer(WebsocketConsumer):
         for (key, value) in kwargs.items():
             content[key] = value
 
-        if content['channel'] == 'echo':
-            with track('recv_channel=echo'):
-                payload = None
-                if 'payload' in content:
-                    payload = content['payload']
+        if content['channel'] == 'ping':
+            with stats.track('recv_channel=ping'):
+                if content['avg_ping_time']:
+                    stats.update('avg_ping_time', content['avg_ping_time'])
                 self.send({
-                    'channel': 'echo',
-                    'payload': payload
+                    'channel': 'ping',
+                    'timestamp': content['timestamp'],
                 })
                 return
 
-        with track('recv_channel=' + content['channel']):
+        with stats.track('recv_channel=' + content['channel']):
             group = get_group(kwargs['app_name'], kwargs['group'])
             participant = Participant.objects.get(code=kwargs['participant_code'])
-            with track('saving event object to database'):
+            with stats.track('saving event object to database'):
                 event = Event.objects.create(
                     group=group,
                     participant=participant,
                     channel=content['channel'],
                     value=content['payload'])
 
-            with track('handing event to group'):
+            with stats.track('handing event to group'):
                 event_handler = getattr(group, '_on_{}_event'.format(content['channel']))
                 event_handler(event)
 
