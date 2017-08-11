@@ -106,6 +106,7 @@ class Group(BaseGroup):
             self.send('state', 'period_start')
 
             if self.period_length():
+                # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
                 self._timer = threading.Timer(
                     self.period_length(),
                     lambda: self.send('state', 'period_end'))

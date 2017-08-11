@@ -25,6 +25,11 @@
 		{% endfor %}
 	</table>
 
+	<ul>
+		<li>Messages: {{ global_channel_stats.messages_count }}</li>
+		<li>Channel Full Count: {{ global_channel_stats.channel_full_count }}</li>
+	</ul>
+
 	<p>
 	<ul>
 	{% for connection in connected_participants %}

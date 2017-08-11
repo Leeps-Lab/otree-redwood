@@ -4,6 +4,7 @@ import datetime
 from importlib import import_module
 import vanilla
 
+import channels
 from django.http import HttpResponse, JsonResponse
 from django.contrib.contenttypes.models import ContentType
 
@@ -84,6 +85,9 @@ class DebugView(vanilla.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['stats'] = stats.items()
+        channel_layer = channels.asgi.get_channel_layer()
+        if 'statistics' in channel_layer.extensions:
+            context['global_channel_stats'] = channel_layer.global_statistics()
         context['connected_participants'] = Connection.objects.all()
         context['session_code'] = self.kwargs['session_code']
         return context

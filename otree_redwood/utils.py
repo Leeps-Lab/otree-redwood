@@ -13,6 +13,7 @@ class DiscreteEventEmitter():
         self.callback = callback
         self.current_interval = 0
         if self.group not in _timers:
+            # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
             self.timer = threading.Timer(self.interval, self._tick)
             _timers[self.group] = self.timer
         else:
