@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='otree-redwood',
-    version='0.1.3',
+    version='0.2',
     packages=find_packages(),
     include_package_data=True,
     license='MIT License',
@@ -36,6 +36,6 @@ setup(
         'channels>=1.1.3,<2',
         'daphne>=1.0.0,<2',
         'jsonfield>=2,<3',
-        'mockredispy>=2.9<3',
+        'mockredispy>=2.9.0,<3',
     ]
 )
