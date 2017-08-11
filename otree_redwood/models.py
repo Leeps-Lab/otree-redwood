@@ -92,6 +92,7 @@ class Group(BaseGroup):
             lock = global_lock()
 
         with lock:
+            self.refresh_from_db()
             if self.ran_ready_function:
                 return
             for player in self.get_players():
