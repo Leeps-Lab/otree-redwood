@@ -21,7 +21,7 @@ class DiscreteEventEmitter():
 
     def _tick(self):
         start = time.time()
-        self.callback(self.current_interval, self.intervals, self.group)
+        self.callback(self.current_interval, self.intervals)
         self.current_interval += 1
         if self.current_interval < self.intervals:
             self.timer = threading.Timer(self.interval, self._tick)
