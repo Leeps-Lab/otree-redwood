@@ -159,7 +159,6 @@ class ContinuousDecisionGroup(Group):
     group_decisions = JSONField(null=True)
 
     def when_all_players_ready(self):
-        logger.info('when_all_players_ready: {}'.format(self.pk))
         self.group_decisions = {}
         start_time = timezone.now()
         for player in self.get_players():
@@ -189,6 +188,5 @@ class ContinuousDecisionGroup(Group):
                 logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
                 return
             self.group_decisions[event.participant.code] = float(event.value)
-            logger.info('group_decisions: {}'.format(self.group_decisions))
             self.save()
             self.send('group_decisions', self.group_decisions)
