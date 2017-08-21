@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.db import models
 import json
 from jsonfield import JSONField
+import logging
+import math
 import otree.common_internal
 from otree.models import BaseGroup
 from otree.views.abstract import global_lock
@@ -12,6 +14,9 @@ from otree_redwood.stats import track
 import redis_lock
 import threading
 import time
+
+
+logger = logging.getLogger(__name__)
 
 
 class Event(models.Model):
@@ -128,6 +133,23 @@ class Group(BaseGroup):
                         'payload': payload
                     })})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        '''
+        BUG: Django save-the-change, which all oTree models inherit from, doesn't
+        recognize changes to JSONField properties. So saving the model won't
+        trigger a database save. This is a hack, but fixes it so any JSONFields
+        get updated every save. oTree uses a forked version of save-the-change
+        so a good alternative might be to fix that to recognize JSONFields (diff
+        them at save time, maybe?).
+        '''
+        if self.pk is not None:
+            json_fields = {}
+            for field in self._meta.get_fields():
+                if isinstance(field, JSONField):
+                    json_fields[field.attname] = getattr(self, field.attname)
+            self._default_manager.filter(pk=self.pk).update(**json_fields)
+
 
 class ContinuousDecisionGroup(Group):
 
@@ -137,6 +159,7 @@ class ContinuousDecisionGroup(Group):
     group_decisions = JSONField(null=True)
 
     def when_all_players_ready(self):
+        logger.info('when_all_players_ready: {}'.format(self.pk))
         self.group_decisions = {}
         start_time = timezone.now()
         for player in self.get_players():
@@ -159,8 +182,13 @@ class ContinuousDecisionGroup(Group):
 
     def _on_decisions_event(self, event=None, **kwargs):
         if not self.group_decisions:
+            logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
             return
         with track('_on_decisions_event'):
-            self.group_decisions[event.participant.code] = event.value
+            if event.value == '' or math.isnan(float(event.value)):
+                logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
+                return
+            self.group_decisions[event.participant.code] = float(event.value)
+            logger.info('group_decisions: {}'.format(self.group_decisions))
             self.save()
             self.send('group_decisions', self.group_decisions)
