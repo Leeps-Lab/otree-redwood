@@ -1,27 +1,41 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-
-import logging
+from chan import Chan
+import codecs
 from collections import OrderedDict
-from unittest import mock
-
+import datetime
 from django.db.migrations.loader import MigrationLoader
 from django.conf import settings
+import logging
+import os
+import otree.common_internal
+from otree.constants_internal import AUTO_NAME_BOTS_EXPORT_FOLDER
+import otree.export
+import otree.session
+from otree.bots.bot import ParticipantBot
 import pytest
 import sys
-
-import otree.session
-import otree.common_internal
-
-from otree.bots.bot import ParticipantBot
-import datetime
-import os
-import codecs
-import otree.export
-from otree.constants_internal import AUTO_NAME_BOTS_EXPORT_FOLDER
+import threading
+import time
+from unittest import mock
 
 logger = logging.getLogger(__name__)
+
+
+class SubmitThread(threading.Thread):
+
+    def __init__(self, bot, results):
+        super().__init__()
+        self.bot = bot
+        self.results = results
+
+    def run(self):
+        try:
+            submission = next(self.bot.submits_generator)
+            self.bot.submit(submission)
+            self.results.put((self.bot, 'submitted'))
+        except StopIteration:
+            self.results.put((self.bot, 'finished'))
+        except Exception as ex:
+            self.results.put((self.bot, ex))
 
 
 class SessionBotRunner(object):
@@ -36,29 +50,32 @@ class SessionBotRunner(object):
         self.open_start_urls()
         loops_without_progress = 0
         while True:
+            import time
+            start = time.time()
             if len(self.bots) == 0:
                 return
             # bots got stuck if there's 2 wait pages in a row
             if loops_without_progress > 10:
                 raise AssertionError('Bots got stuck')
-            # store in a separate list so we don't mutate the iterable
-            playable_ids = list(self.bots.keys())
-            progress_made = False
-            for pk in playable_ids:
-                bot = self.bots[pk]
+            results = Chan(buflen=len(self.bots))
+            threads = []
+            for bot in self.bots.values():
                 if bot.on_wait_page():
                     pass
                 else:
-                    try:
-                        submission = next(bot.submits_generator)
-                    except StopIteration:
-                        # this bot is finished
-                        self.bots.pop(pk)
-                        progress_made = True
-                    else:
-                        bot.submit(submission)
-                        progress_made = True
-            if not progress_made:
+                    thread = SubmitThread(bot, results)
+                    threads.append(thread)
+                    thread.start()
+
+            for thread in threads:
+                bot, status = results.get()
+                if isinstance(status, Exception):
+                    raise status
+                if status == 'finished':
+                    del self.bots[bot.participant.id]
+            results.close()
+
+            if not threads:
                 loops_without_progress += 1
 
     def open_start_urls(self):
@@ -79,6 +96,9 @@ def session_bot_runner_factory(session) -> SessionBotRunner:
 def test_bots_async(session_config_name, num_participants, run_export):
     config_name = session_config_name
     session_config = otree.session.SESSION_CONFIGS_DICT[config_name]
+
+    if 'async_bots' not in session_config or not session_config['async_bots']:
+        return
 
     # num_bots is deprecated, because the old default of 12 or 6 was too
     # much, and it doesn't make sense to
