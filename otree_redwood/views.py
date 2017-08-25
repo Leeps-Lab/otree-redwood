@@ -44,8 +44,9 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
             )
 
             w = csv.writer(response)
-            for header, rows in tables:
-                w.writerow(header)
+            for i, (header, rows) in enumerate(tables):
+                if i == 0:
+                    w.writerow(header)
                 w.writerows(rows)
 
             return response
