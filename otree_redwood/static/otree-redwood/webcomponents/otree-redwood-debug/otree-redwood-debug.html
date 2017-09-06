@@ -42,8 +42,9 @@
 			</select>
 		</div>
 		<div class="layout horizontal">
-			<button on-tap="_play" hidden$="[[ _hidePlayButton(playing, paused) ]]">Play</button>
+			<button on-tap="_play" hidden$="[[ _hidePlayButton(playing, paused, events.*) ]]">Play</button>
 			<button on-tap="_pause" hidden$="[[ _hidePauseButton(playing, paused) ]]">Pause</button>
+			<button on-tap="_step" hidden$="[[ _hideStepButton(events.*) ]]">Step</button>
 			<button on-tap="_stop" hidden$="[[ _hideStopButton(playing, paused) ]]">Stop</button>
 			<span>Elapsed: [[ _displayElapsedTime(elapsedTime) ]]</span>
 		</div>
@@ -142,7 +143,16 @@
 						type: 'datetime',
 						dateTimeLabelFormats: {
 							second: '%H:%M:%S'
-						}
+						},
+						plotBands: [{
+							value: 0,
+							width: 1,
+							color: 'green',
+							label: {
+								text: '',
+								layout: 'vertical',
+							},
+						}]
 					},
 					yAxis: {
 						title: { text: '' },
@@ -173,9 +183,16 @@
 						},
 					]
 				});
+				this.currTimeBand = this.chart.xAxis[0].plotLinesAndBands[0];
+				this.currEventIndex = 0;
+				this.session = window.localStorage.getItem('otree-redwood-debug:session');
+				if (this.session) {
+					this._loadSessionEvents();
+				}
 			},
 			_loadSessionEvents() {
 				if (this.session) {
+					window.localStorage.setItem('otree-redwood-debug:session', this.session);
 					this.loading = true;
 					$.getJSON('/redwood/api/events/session/' + this.session + '/')
 					.done(this._initEvents.bind(this))
@@ -230,15 +247,23 @@
 				buckets.splice(buckets.length-1, 1);
 				this.chart.series[0].setData(buckets);
 			},
-			_replayNextEvent() {
+			_rscheduleReplay() {
 				if (!this.playing) {
 					return;
 				}
 				if (this.paused) {
-					window.setTimeout(this._replayNextEvent.bind(this), 10);
+					window.setTimeout(this._scheduleReplay.bind(this), 10);
 					return;
 				}
+				this._replayNextEvent();
+				const nextEvent = this.events[this.currEventIndex+1];
+				const delta = nextEvent.timestamp -currEvent.timestamp;
+				this.currEventIndex += 1;
+				window.setTimeout(this._scheduleReplay.bind(this), delta);
+			},
+			_replayNextEvent() {
 				const currEvent = this.events[this.currEventIndex];
+				console.log(currEvent);
 				socket.onmessage({
 					data: JSON.stringify({
 						channel: currEvent.channel,
@@ -252,16 +277,16 @@
 					this._stop();
 					return;
 				}
-				const nextEvent = this.events[this.currEventIndex+1];
-				const delta = nextEvent.timestamp -currEvent.timestamp;
 				this.currEventIndex += 1;
-				window.setTimeout(this._replayNextEvent.bind(this), delta);
 			},
 			_displayElapsedTime(elapsedTime) {
 				return (elapsedTime / 1000).toFixed(1);
 			},
 			_hidePlayButton(playing, paused) {
-				return playing && !paused;
+				return this.events.length == 0 || (playing && !paused);
+			},
+			_hideStepButton() {
+				return this.events.length == 0;
 			},
 			_hidePauseButton(playing, paused) {
 				return !playing || paused;
@@ -274,21 +299,15 @@
 					this.playing = true;
 					this.elapsedTime = 0;
 					this.currEventIndex = 0;
-					this.currTimeBand = this.chart.xAxis[0].addPlotBand({
-						value: this.events[0].timestamp,
-						width: 1,
-						color: 'green',
-						label: {
-							text: '',
-							layout: 'vertical',
-						},
-					});
-					this._replayNextEvent();
+					this._scheduleReplay();
 				}
 				this.paused = false;
 			},
 			_pause() {
 				this.paused = true;
+			},
+			_step() {
+				this._replayNextEvent();
 			},
 			_stop() {
 				this.elapsedTime = 0;
