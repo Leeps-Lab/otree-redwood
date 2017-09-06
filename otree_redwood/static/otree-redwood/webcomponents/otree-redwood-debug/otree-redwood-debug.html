@@ -213,6 +213,16 @@
 				this.eventsByAppNameThenGroup = eventsByAppNameThenGroup;
 				this.app = this.apps[0];
 				this.group = this.groups[0];
+				let participants = {};
+				for (let event of eventsByAppNameThenGroup[this.app][this.group]) {
+					if (event.participant) {
+						oTree.participantCode = event.participant;
+						break;
+					}
+				}
+				oTree.session = this.session;
+				oTree.appName = this.app;
+				oTree.group = parseInt(this.group);
 				window.requestAnimationFrame(this._redrawChart.bind(this));
 			},
 			_computeEvents(eventsByAppNameThenGroup, app, group) {
