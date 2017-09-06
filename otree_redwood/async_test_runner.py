@@ -3,6 +3,7 @@ import codecs
 from collections import OrderedDict
 import datetime
 from django.db.migrations.loader import MigrationLoader
+from django.db.utils import OperationalError
 from django.conf import settings
 import logging
 import os
@@ -11,6 +12,7 @@ from otree.constants_internal import AUTO_NAME_BOTS_EXPORT_FOLDER
 import otree.export
 import otree.session
 from otree.bots.bot import ParticipantBot
+from otree.views.abstract import global_lock
 import pytest
 import sys
 import threading
@@ -30,8 +32,7 @@ class SubmitThread(threading.Thread):
     def run(self):
         try:
             submission = next(self.bot.submits_generator)
-            self.bot.submit(submission)
-            self.results.put((self.bot, 'submitted'))
+            self.results.put((self.bot, submission))
         except StopIteration:
             self.results.put((self.bot, 'finished'))
         except Exception as ex:
@@ -39,6 +40,7 @@ class SubmitThread(threading.Thread):
 
 
 class SessionBotRunner(object):
+
     def __init__(self, bots):
         self.bots = OrderedDict()
 
@@ -71,8 +73,10 @@ class SessionBotRunner(object):
                 bot, status = results.get()
                 if isinstance(status, Exception):
                     raise status
-                if status == 'finished':
+                elif status == 'finished':
                     del self.bots[bot.participant.id]
+                else:
+                    bot.submit(status)
             results.close()
 
             if not threads:
@@ -96,9 +100,6 @@ def session_bot_runner_factory(session) -> SessionBotRunner:
 def test_bots_async(session_config_name, num_participants, run_export):
     config_name = session_config_name
     session_config = otree.session.SESSION_CONFIGS_DICT[config_name]
-
-    if 'async_bots' not in session_config or not session_config['async_bots']:
-        return
 
     # num_bots is deprecated, because the old default of 12 or 6 was too
     # much, and it doesn't make sense to
