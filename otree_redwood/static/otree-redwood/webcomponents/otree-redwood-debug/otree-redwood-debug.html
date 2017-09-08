@@ -257,7 +257,7 @@
 				buckets.splice(buckets.length-1, 1);
 				this.chart.series[0].setData(buckets);
 			},
-			_rscheduleReplay() {
+			_scheduleReplay() {
 				if (!this.playing) {
 					return;
 				}
@@ -265,10 +265,10 @@
 					window.setTimeout(this._scheduleReplay.bind(this), 10);
 					return;
 				}
+				const currEvent = this.events[this.currEventIndex];
 				this._replayNextEvent();
-				const nextEvent = this.events[this.currEventIndex+1];
-				const delta = nextEvent.timestamp -currEvent.timestamp;
-				this.currEventIndex += 1;
+				const nextEvent = this.events[this.currEventIndex];
+				const delta = nextEvent.timestamp - currEvent.timestamp;
 				window.setTimeout(this._scheduleReplay.bind(this), delta);
 			},
 			_replayNextEvent() {
