@@ -48,3 +48,11 @@ TODO
 Awesome debugging - watch events live in otree-redwood-debug, filter events
 by group, participant, channel, and values. Save and replay events into the
 otree-events component.
+
+Pushing to PyPI
+---------------
+
+Increment version number in ``setup.py``.
+
+.. code-block::
+    python setup.py sdist upload -r pypi
