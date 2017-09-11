@@ -54,5 +54,17 @@ Pushing to PyPI
 
 Increment version number in ``setup.py``.
 
+You need a ~/.pypirc like this:
+
 .. code-block::
-    python setup.py sdist upload -r pypi
+    [distutils]
+    index-servers =
+        pypi
+
+    [pypi]
+    username:yourusername
+    password:yourpassword
+
+.. code-block::
+    python setup.py sdist
+    twine upload dist/*
