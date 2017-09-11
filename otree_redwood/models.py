@@ -160,27 +160,10 @@ class ContinuousDecisionGroup(Group):
 
     def when_all_players_ready(self):
         self.group_decisions = {}
-        start_time = timezone.now()
-        for player in self.get_players():
-            d = Event()
-            d.group = self
-            d.channel = 'decisions'
-            d.participant = player.participant
-
-            d.timestamp = start_time
-            d.value = self.initial_decision()
-            self.group_decisions[d.participant.code] = d.value
-
-            d.save()
         self.save()
-        self.send('group_decisions', self.group_decisions)
-
-    def initial_decision(self):
-        """Implement this to give the players an initial decision."""
-        return None
 
     def _on_decisions_event(self, event=None, **kwargs):
-        if not self.group_decisions:
+        if not self.ran_ready_function:
             logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
             return
         with track('_on_decisions_event'):

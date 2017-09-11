@@ -28,8 +28,8 @@
 		Polymer({
 			is: 'otree-continuous-decision',
 			properties: {
-				component: {
-					type: String
+				initialDecision: {
+					type: Number,
 				},
 				groupDecisions: {
 					type: Object,
@@ -48,6 +48,9 @@
 					notify: true,
 					computed: '_computeOtherDecision(groupDecisions.*)'
 				}
+			},
+			ready() {
+				this.myDecision = this.initialDecision;
 			},
 			_handleGroupDecisionsEvent(event) {
 				this.groupDecisions = event.detail.payload;
