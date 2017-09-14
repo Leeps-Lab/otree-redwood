@@ -161,6 +161,8 @@ class ContinuousDecisionGroup(Group):
 
     def when_all_players_ready(self):
         self.group_decisions = {}
+        for player in self.get_players():
+            self.group_decisions[player.participant.code] = player.initial_decision()
         self.save()
 
     def _on_decisions_event(self, event=None, **kwargs):
@@ -182,7 +184,7 @@ class DiscreteDecisionGroup(Group):
         abstract = True
 
     group_decisions = JSONField(null=True)
-    continuous_group_decisions = JSONField(null=True)
+    subperiod_group_decisions = JSONField(null=True)
 
     def seconds_per_tick(self):
         return 10
@@ -192,7 +194,10 @@ class DiscreteDecisionGroup(Group):
 
     def when_all_players_ready(self):
         self.group_decisions = {}
-        self.continuous_group_decisions = {}
+        self.subperiod_group_decisions = {}
+        for player in self.get_players():
+            self.group_decisions[player.participant.code] = player.initial_decision()
+            self.subperiod_group_decisions[player.participant.code] = player.initial_decision()
         emitter = DiscreteEventEmitter(
             self.seconds_per_tick(), 
             self.period_length(),
@@ -203,9 +208,9 @@ class DiscreteDecisionGroup(Group):
 
     def _tick(self, current_interval, intervals):
         self.refresh_from_db()
-        for key, value in self.continuous_group_decisions.items():
-            self.group_decisions[key] = value
-        self.send('group_decisions', self.group_decisions)
+        for key, value in self.group_decisions.items():
+            self.subperiod_group_decisions[key] = value
+        self.send('group_decisions', self.subperiod_group_decisions)
         self.save()
 
     def _on_decisions_event(self, event=None, **kwargs):
@@ -216,5 +221,5 @@ class DiscreteDecisionGroup(Group):
             if event.value == '' or math.isnan(float(event.value)):
                 logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
                 return
-            self.continuous_group_decisions[event.participant.code] = float(event.value)
+            self.group_decisions[event.participant.code] = float(event.value)
             self.save()
