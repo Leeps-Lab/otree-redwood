@@ -11,6 +11,7 @@ import otree.common_internal
 from otree.models import BaseGroup
 from otree.views.abstract import global_lock
 from otree_redwood.stats import track 
+from otree_redwood.utils import DiscreteEventEmitter
 import redis_lock
 import threading
 import time
@@ -173,3 +174,47 @@ class ContinuousDecisionGroup(Group):
             self.group_decisions[event.participant.code] = float(event.value)
             self.save()
             self.send('group_decisions', self.group_decisions)
+
+
+class DiscreteDecisionGroup(Group):
+
+    class Meta:
+        abstract = True
+
+    group_decisions = JSONField(null=True)
+    continuous_group_decisions = JSONField(null=True)
+
+    def seconds_per_tick(self):
+        return 10
+
+    def period_length(self):
+        return 60
+
+    def when_all_players_ready(self):
+        self.group_decisions = {}
+        self.continuous_group_decisions = {}
+        emitter = DiscreteEventEmitter(
+            self.seconds_per_tick(), 
+            self.period_length(),
+            self,
+            self._tick)
+        emitter.start()
+        self.save()
+
+    def _tick(self, current_interval, intervals):
+        self.refresh_from_db()
+        for key, value in self.continuous_group_decisions.items():
+            self.group_decisions[key] = value
+        self.send('group_decisions', self.group_decisions)
+        self.save()
+
+    def _on_decisions_event(self, event=None, **kwargs):
+        if not self.ran_ready_function:
+            logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
+            return
+        with track('_on_decisions_event'):
+            if event.value == '' or math.isnan(float(event.value)):
+                logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
+                return
+            self.continuous_group_decisions[event.participant.code] = float(event.value)
+            self.save()
