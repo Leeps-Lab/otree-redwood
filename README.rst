@@ -1,3 +1,5 @@
+.. image:: https://readthedocs.org/projects/otree-redwood/badge/?version=latest
+
 oTree Redwood Extension
 =================
 
