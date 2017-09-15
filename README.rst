@@ -1,6 +1,6 @@
 .. image:: https://readthedocs.org/projects/otree-redwood/badge/?version=latest
-:target: http://otree-redwood.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+  :target: http://otree-redwood.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation Status
 
 oTree Redwood Extension
 =================
