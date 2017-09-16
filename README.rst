@@ -15,14 +15,16 @@ Increment version number in ``setup.py``.
 You need a ~/.pypirc like this:
 
 .. code-block::
-    [distutils]
-    index-servers =
-        pypi
 
-    [pypi]
-    username:yourusername
-    password:yourpassword
+ [distutils]
+ index-servers =
+   pypi
 
-.. code-block::
-    python setup.py sdist
-    twine upload dist/*
+ [pypi]
+   username:yourusername
+   password:yourpassword
+
+.. code-block:: bash
+
+  > python setup.py sdist
+  > twine upload dist/*
