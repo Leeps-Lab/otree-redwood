@@ -119,7 +119,7 @@ the DecisionGroup and websockets.
 
 4. Use the otree-redwood web components in one of your experiments HTML templates.
 
-.. code-block:: html
+.. code-block:: html+django
 
  {% block scripts %}
    <script>
