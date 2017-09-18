@@ -21,14 +21,9 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
 
-import otree.settings
-otree_settings = {
-	'BASE_DIR': os.path.dirname(os.path.abspath(__file__)),
-	'SECRET_KEY': '',
-	'SESSION_CONFIGS': [],
-	'INSTALLED_APPS': ['otree_redwood'],
-}
-otree.settings.augment_settings(otree_settings)
+import json
+with open('settings.json') as f:
+    otree_settings = json.load(f)
 
 from django.conf import settings
 settings.configure(**otree_settings)
