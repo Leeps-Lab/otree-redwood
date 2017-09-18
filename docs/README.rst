@@ -1,5 +1,5 @@
 .. code-block:: bash
 
- > sphinx-apidoc -o . ../
+ > sphinx-apidoc -f -o . ../
  > make html
  > sphinx-autobuild . _build/html
