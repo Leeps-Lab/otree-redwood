@@ -11,70 +11,16 @@ Subpackages
 Submodules
 ----------
 
-otree\_redwood\.apps module
----------------------------
+.. toctree::
 
-.. automodule:: otree_redwood.apps
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.async\_test\_runner module
-------------------------------------------
-
-.. automodule:: otree_redwood.async_test_runner
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.conftest module
--------------------------------
-
-.. automodule:: otree_redwood.conftest
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.consumers module
---------------------------------
-
-.. automodule:: otree_redwood.consumers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.models module
------------------------------
-
-.. automodule:: otree_redwood.models
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.stats module
-----------------------------
-
-.. automodule:: otree_redwood.stats
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.utils module
-----------------------------
-
-.. automodule:: otree_redwood.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.views module
-----------------------------
-
-.. automodule:: otree_redwood.views
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   otree_redwood.apps
+   otree_redwood.async_test_runner
+   otree_redwood.conftest
+   otree_redwood.consumers
+   otree_redwood.models
+   otree_redwood.stats
+   otree_redwood.utils
+   otree_redwood.views
 
 Module contents
 ---------------

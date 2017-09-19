@@ -4,30 +4,11 @@ otree\_redwood\.otree\_extensions package
 Submodules
 ----------
 
-otree\_redwood\.otree\_extensions\.admin module
------------------------------------------------
+.. toctree::
 
-.. automodule:: otree_redwood.otree_extensions.admin
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.otree\_extensions\.routing module
--------------------------------------------------
-
-.. automodule:: otree_redwood.otree_extensions.routing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-otree\_redwood\.otree\_extensions\.urls module
-----------------------------------------------
-
-.. automodule:: otree_redwood.otree_extensions.urls
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   otree_redwood.otree_extensions.admin
+   otree_redwood.otree_extensions.routing
+   otree_redwood.otree_extensions.urls
 
 Module contents
 ---------------
