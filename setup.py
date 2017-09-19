@@ -35,7 +35,7 @@ setup(
         'Sphinx',
         'sphinx-autobuild',
         'sphinx-rtd-theme',
-        'asgi_redis>=1.2.0,<2',
+        'asgi_redis==1.4.2',
         'chan>=0.3.1,<1',
         'channels==1.1.6',
         'daphne>=1.0.0,<2',
