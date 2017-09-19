@@ -37,7 +37,7 @@ setup(
         'sphinx-rtd-theme',
         'asgi_redis>=1.2.0,<2',
         'chan>=0.3.1,<1',
-        'channels>=1.1.3,<2',
+        'channels>=1.1.6',
         'daphne>=1.0.0,<2',
         'Django==1.8.8',
         'jsonfield>=2,<3',
