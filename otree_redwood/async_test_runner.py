@@ -87,7 +87,7 @@ class SessionBotRunner(object):
             bot.open_start_url()
 
 
-def session_bot_runner_factory(session) -> SessionBotRunner:
+def session_bot_runner_factory(session):
     bots = []
     for participant in session.get_participants():
         bot = ParticipantBot(participant)
