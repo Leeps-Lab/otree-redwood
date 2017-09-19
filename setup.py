@@ -42,5 +42,6 @@ setup(
         'daphne>=1.0.0,<2',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
+				'otree-core==1.4.0b6',
     ]
 )
