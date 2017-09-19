@@ -11,6 +11,7 @@ Welcome to otree-redwood's documentation!
    :caption: Contents:
 
    source/modules
+   README
 
 otree-redwood is a library that enables oTree experiments to use websockets.
 An oTree page might collect one decision per player in the order of 60 seconds.

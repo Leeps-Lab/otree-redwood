@@ -1,1 +1,52 @@
-{"NO_EXPERIMENT_APPS": ["django.contrib.auth", "otree", "floppyforms", "django.contrib.admin", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles", "otree.timeout", "channels", "huey.contrib.djhuey", "rest_framework", "idmap", "otree_redwood"], "REAL_WORLD_CURRENCY_DECIMAL_PLACES": 2, "LOGGING": {"loggers": {"raven.contrib.django.client.DjangoClient": {"handlers": ["console"], "level": "WARNING"}, "otree.sentry": {"handlers": ["sentry"], "propagate": true, "level": "DEBUG"}, "django.channels": {"handlers": ["sentry"], "propagate": true, "level": "ERROR"}, "django.request": {"handlers": ["console"], "propagate": true, "level": "DEBUG"}, "huey.consumer": {"handlers": ["sentry", "console"], "level": "INFO"}, "otree.test.core": {"handlers": ["console"], "propagate": false, "level": "INFO"}, "otree.test.browser_bots": {"handlers": ["sentry", "console"], "propagate": false, "level": "INFO"}}, "handlers": {"sentry": {"level": "WARNING", "class": "raven.contrib.django.raven_compat.handlers.SentryHandler"}, "console": {"level": "INFO", "class": "logging.StreamHandler", "formatter": "verbose"}}, "root": {"level": "DEBUG", "handlers": ["console"]}, "version": 1, "disable_existing_loggers": false, "formatters": {"simple": {"format": "%(levelname)s %(message)s"}, "verbose": {"format": "[%(levelname)s|%(asctime)s] %(name)s > %(message)s"}}}, "STATIC_ROOT": "/home/jpettit/code/otree/otree-redwood/docs/_static_root", "BASE_DIR": "/home/jpettit/code/otree/otree-redwood/docs", "TEMPLATES": [{"BACKEND": "django.template.backends.django.DjangoTemplates", "OPTIONS": {"debug": true, "context_processors": ["django.contrib.auth.context_processors.auth", "django.template.context_processors.debug", "django.template.context_processors.i18n", "django.template.context_processors.media", "django.template.context_processors.static", "django.template.context_processors.tz", "django.contrib.messages.context_processors.messages", "django.core.context_processors.request"], "loaders": [["django.template.loaders.cached.Loader", ["django.template.loaders.filesystem.Loader", "django.template.loaders.app_directories.Loader"]]]}, "DIRS": []}], "CHANNEL_LAYERS": {"default": {"BACKEND": "otree.channels.asgi_redis.RedisChannelLayer", "CONFIG": {"hosts": ["redis://localhost:6379"]}, "ROUTING": "otree.channels.routing.channel_routing"}}, "STATIC_URL": "/static/", "SECRET_KEY": "", "ALLOWED_HOSTS": ["*"], "STATICFILES_DIRS": ["/home/jpettit/code/otree/otree-redwood/docs/_static"], "USE_POINTS": true, "MIDDLEWARE_CLASSES": ["otree.middleware.CheckDBMiddleware", "whitenoise.middleware.WhiteNoiseMiddleware", "django.contrib.sessions.middleware.SessionMiddleware", "django.middleware.common.CommonMiddleware", "django.middleware.csrf.CsrfViewMiddleware", "django.contrib.auth.middleware.AuthenticationMiddleware", "django.contrib.messages.middleware.MessageMiddleware"], "USE_L10N": true, "REAL_WORLD_CURRENCY_LOCALE": "en_us", "INMEMORY_CHANNEL_LAYER": {"BACKEND": "asgiref.inmemory.ChannelLayer", "ROUTING": "otree.channels.routing.channel_routing"}, "INSTALLED_OTREE_APPS": [], "REAL_WORLD_CURRENCY_CODE": "USD", "LOCALE_PATHS": ["/home/jpettit/code/otree/otree-redwood/docs/locale"], "ROOT_URLCONF": "otree.urls", "LOGIN_REDIRECT_URL": "Sessions", "MESSAGE_TAGS": {"40": "danger"}, "STATICFILES_STORAGE": "whitenoise.django.GzipManifestStaticFilesStorage", "POINTS_DECIMAL_PLACES": 0, "HUEY": {"name": "otree-huey", "connection": {"password": null, "port": 6379, "host": "localhost"}, "consumer": {"workers": 1, "scheduler_interval": 5, "loglevel": "warning"}, "result_store": false, "always_eager": false}, "BOTS_CHECK_HTML": true, "REDIS_URL": "redis://localhost:6379", "USE_TZ": true, "INSTALLED_APPS": ["django.contrib.auth", "otree", "floppyforms", "django.contrib.admin", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles", "otree.timeout", "channels", "huey.contrib.djhuey", "rest_framework", "idmap", "otree_redwood"], "SESSION_CONFIGS": [], "MTURK_NUM_PARTICIPANTS_MULTIPLE": 2, "SECURE_PROXY_SSL_HEADER": ["HTTP_X_FORWARDED_PROTO", "https"], "TIME_ZONE": "UTC", "LANGUAGE_CODE": "en-us"}
+{
+  "ALLOWED_HOSTS":[
+    "*"
+  ],
+  "BASE_DIR":"/home/jpettit/code/otree/otree-redwood/docs",
+  "BOTS_CHECK_HTML":true,
+  "INSTALLED_APPS":[
+		"django.contrib.contenttypes",
+		"otree_redwood"
+  ],
+  "INSTALLED_OTREE_APPS":[],
+  "LANGUAGE_CODE":"en-us", "LOCALE_PATHS":[
+    "/home/jpettit/code/otree/otree-redwood/docs/locale"
+  ],
+  "LOGGING":{
+    "disable_existing_loggers":false,
+    "version":1
+  },
+  "LOGIN_REDIRECT_URL":"Sessions",
+  "MESSAGE_TAGS":{
+    "40":"danger"
+  },
+  "MIDDLEWARE_CLASSES":[
+  ],
+  "MTURK_NUM_PARTICIPANTS_MULTIPLE":2,
+  "NO_EXPERIMENT_APPS":[
+  ],
+  "POINTS_DECIMAL_PLACES":0,
+  "REAL_WORLD_CURRENCY_CODE":"USD",
+  "REAL_WORLD_CURRENCY_DECIMAL_PLACES":2,
+  "REAL_WORLD_CURRENCY_LOCALE":"en_us",
+  "REDIS_URL":"redis://localhost:6379",
+  "ROOT_URLCONF":"otree.urls",
+  "SECRET_KEY":"",
+  "SECURE_PROXY_SSL_HEADER":[
+    "HTTP_X_FORWARDED_PROTO",
+    "https"
+  ],
+  "SESSION_CONFIGS":[],
+  "STATICFILES_DIRS":[
+    "/home/jpettit/code/otree/otree-redwood/docs/_static"
+  ],
+  "STATICFILES_STORAGE":"whitenoise.django.GzipManifestStaticFilesStorage",
+  "STATIC_ROOT":"/home/jpettit/code/otree/otree-redwood/docs/_static_root",
+  "STATIC_URL":"/static/",
+  "TEMPLATES":[
+  ],
+  "TIME_ZONE":"UTC",
+  "USE_L10N":true,
+  "USE_POINTS":true,
+  "USE_TZ":true
+}

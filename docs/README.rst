@@ -1,3 +1,6 @@
+README
+======
+
 .. code-block:: bash
 
  > sphinx-apidoc -f -o . ../
