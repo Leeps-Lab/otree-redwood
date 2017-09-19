@@ -37,11 +37,11 @@ setup(
         'sphinx-rtd-theme',
         'asgi_redis>=1.2.0,<2',
         'chan>=0.3.1,<1',
-        'channels>=1.1.6',
+        'channels==1.1.6',
         'daphne>=1.0.0,<2',
         'Django==1.8.8',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
-				'otree-core==1.4.0b6',
+        'otree-core==1.4.0b6',
     ]
 )
