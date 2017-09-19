@@ -5,4 +5,3 @@ otree-redwood
    :maxdepth: 4
 
    otree_redwood
-   setup
