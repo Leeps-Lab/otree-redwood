@@ -39,7 +39,7 @@ setup(
         'chan>=0.3.1,<1',
         'channels>=1.1.3,<2',
         'daphne>=1.0.0,<2',
-        'Django=1.8.8',
+        'Django==1.8.8',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
 				'otree-core==1.4.0b6',
