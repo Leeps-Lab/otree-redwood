@@ -28,3 +28,17 @@ You need a ~/.pypirc like this:
 
   > python setup.py sdist
   > twine upload dist/*
+
+Building the Docs
+-----------------
+
+.. code-block:: bash
+
+ // From docs/
+ // Build API docs, autodetected from docstrings.
+ // Ignore setup.py because it will try to call os.exit.
+ > sphinx-apidoc -f -e --ext-autodoc -o source/ ../ ../setup.py
+ // Build the docs, check for warnings.
+ > make html
+ // Run server for live editing.
+ > sphinx-autobuild . _build/html

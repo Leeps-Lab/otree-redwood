@@ -84,7 +84,7 @@ class Group(BaseGroup):
         all players are ready.
         """
 
-    def when_player_disconnects(self):
+    def when_player_disconnects(self, player):
         """Implement this to perform an action when a player disconnects."""
 
     def _on_connect(self, participant):
@@ -119,7 +119,12 @@ class Group(BaseGroup):
                 self._timer.start()
 
     def _on_disconnect(self, participant):
-        self.when_player_disconnects()
+        player = None
+        for p in self.get_players():
+            if p.participant == participant:
+                player = p
+                break
+        self.when_player_disconnects(player)
 
     def send(self, channel, payload):
         with track('send_channel=' + channel):
