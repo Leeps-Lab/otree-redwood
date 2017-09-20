@@ -1,10 +1,21 @@
-.. _groups:
+.. _Groups:
 
 Groups
 ======
 
+.. _BaseGroup:
+
 Base Group
 ----------
+
+The otree-redwood base Group is a building block for more complex behavior.
+By default it uses a ``period_length`` function you implement to set a timer
+that will auto-advance subjects similar to oTree's ``timeout_seconds``
+variable.
+
+You probably don't want to extend this class directly - instead you can
+extend of of this children (e.g. ContinuousDecisionGroup_ or
+DiscreteDecisionGroup_)
 
 .. code-block:: python
 
@@ -43,8 +54,14 @@ has ended. Generally this means the player closed their browser window or
 turned off their machine. You can override this function to implement behavior
 like pausing the period and notifying group members.
 
+.. _ContinuousDecisionGroup:
+
 ContinuousDecisionGroup
 -----------------------
+
+.. raw:: html
+
+	<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTuBNob_ZpgkYT64AEW33sLQEq9aA2Tk_RfYA0yfJfEWUpSW6Ysu2Og5911_aIFb0I6x8Ixw4V6dAGn/embed?start=false&loop=false&delayms=6000000" frameborder="0" width="700" height="400" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
 
 .. code-block:: python
 
@@ -57,6 +74,8 @@ group_decisions
 
 ``group_decisions`` contains a dictionary mapping a participant code to their
 current decision value.
+
+.. _DiscreteDecisionGroup:
 
 DiscreteDecisionGroup
 ---------------------
