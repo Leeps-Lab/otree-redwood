@@ -42,6 +42,10 @@
 					notify: true,
 					observer: '_myDecisionChanged'
 				},
+				myCurrentDecision: {
+					type: Number,
+					notify: true,
+				},
 				otherDecision: {
 					type: Number,
 					readonly: true,
@@ -54,8 +58,9 @@
 			},
 			_handleGroupDecisionsEvent(event) {
 				this.groupDecisions = event.detail.payload;
+				const pcode = this.$.constants.participantCode;
+				this.myCurrentDecision = this.groupDecisions[pcode];
 				if (this.myDecision === null) {
-					const pcode = this.$.constants.participantCode;
 					this.myDecision = this.groupDecisions[pcode];
 				}
 			},
