@@ -51,7 +51,21 @@
 					readonly: true,
 					notify: true,
 					computed: '_computeOtherDecision(groupDecisions.*)'
-				}
+				},
+				maxPerSecond: {
+					type: Number,
+					value: 0
+				},
+				_queries: {
+					type: Array,
+					value: () => {
+						const a = [];
+						for (let i = 0; i < 60; i++) {
+							a.push(0);
+						}
+						return a;
+					}
+				},
 			},
 			ready() {
 				this.myDecision = this.initialDecision;
@@ -82,7 +96,22 @@
                 // if no key for the other player is found, just default to 0.5
                 return null;
 			},
+			_rate() {
+				const s = new Date().getSeconds();
+				this._queries[s]++;
+				let last = s-1;
+				if (last < 0) {
+					last = this._queries.length - 1;
+				}
+				this._queries[last] = 0;
+				return this._queries[s];
+			},
 			_myDecisionChanged() {
+				if (this.maxPerSecond > 0 && this._rate() > this.maxPerSecond) {
+					console.warn('rate limited');
+					// TODO: retry latest decision after rate goes down.
+					return;
+				}
 				this.$.decisionsChannel.send(this.myDecision);
 			}
 		});
