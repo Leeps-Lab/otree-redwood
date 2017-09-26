@@ -5,10 +5,10 @@ Webcomponents
 otree-channel
 -------------
 
-otree-continuous-decision
+otree-decision
 -------------------------
 
-otree-continuous-decision-bot
+otree-decision-bot
 -----------------------------
 
 otree-events

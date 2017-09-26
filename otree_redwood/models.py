@@ -191,7 +191,7 @@ class DiscreteDecisionGroup(Group):
     group_decisions = JSONField(null=True)
     subperiod_group_decisions = JSONField(null=True)
 
-    def seconds_per_tick(self):
+    def num_subperiods(self):
         return 10
 
     def period_length(self):
@@ -204,7 +204,7 @@ class DiscreteDecisionGroup(Group):
             self.group_decisions[player.participant.code] = player.initial_decision()
             self.subperiod_group_decisions[player.participant.code] = player.initial_decision()
         emitter = DiscreteEventEmitter(
-            self.seconds_per_tick(), 
+            self.period_length() / self.num_subperiods(), 
             self.period_length(),
             self,
             self._tick)

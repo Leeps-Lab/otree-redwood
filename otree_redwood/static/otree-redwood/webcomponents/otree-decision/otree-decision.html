@@ -1,0 +1,119 @@
+<link
+	rel="import"
+	href="/static/bower_components/polymer/polymer.html" />
+
+<link
+    rel="import"
+    href="/static/otree-redwood/webcomponents/otree-channel/otree-channel.html" />
+<link
+	rel="import" 
+	href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
+
+
+<dom-module id="otree-decision">
+
+	<template>
+    	<otree-constants id="constants"></otree-constants>
+    	<otree-channel
+    		id="decisionsChannel"
+    		channel="decisions">
+	    </otree-channel>
+    	<otree-channel
+    		channel="group_decisions"
+    		on-event="_handleGroupDecisionsEvent">
+	    </otree-channel>
+	</template>
+
+	<script>
+		Polymer({
+			is: 'otree-decision',
+			properties: {
+				initialDecision: {
+					type: Number,
+				},
+				groupDecisions: {
+					type: Object,
+					readonly: true,
+					notify: true,
+					value: () => { return {} }
+				},
+				myDecision: {
+					type: Number,
+					notify: true,
+					observer: '_myDecisionChanged'
+				},
+				myCurrentDecision: {
+					type: Number,
+					notify: true,
+				},
+				otherDecision: {
+					type: Number,
+					readonly: true,
+					notify: true,
+					computed: '_computeOtherDecision(groupDecisions.*)'
+				},
+				maxPerSecond: {
+					type: Number,
+					value: 0
+				},
+				_queries: {
+					type: Array,
+					value: () => {
+						const a = [];
+						for (let i = 0; i < 60; i++) {
+							a.push(0);
+						}
+						return a;
+					}
+				},
+			},
+			ready() {
+				this.myDecision = this.initialDecision;
+			},
+			_handleGroupDecisionsEvent(event) {
+				this.groupDecisions = event.detail.payload;
+				const pcode = this.$.constants.participantCode;
+				this.myCurrentDecision = this.groupDecisions[pcode];
+				if (this.myDecision === null) {
+					this.myDecision = this.groupDecisions[pcode];
+				}
+			},
+			_computeOtherDecision(groupDecisions) {
+				this.groupDecisions = this.groupDecisions || {};
+				const pcode = this.$.constants.participantCode;
+
+				// group decisions should have two entries maximum
+				console.assert(
+					Object.keys(this.groupDecisions).length <= 2,
+					'too many players in group decisions');
+
+				for (let key in this.groupDecisions) {
+                    if (key != pcode) {
+                    	return this.groupDecisions[key];
+                    }
+                }
+
+                return null;
+			},
+			_rate() {
+				const s = new Date().getSeconds();
+				this._queries[s]++;
+				let last = s-1;
+				if (last < 0) {
+					last = this._queries.length - 1;
+				}
+				this._queries[last] = 0;
+				return this._queries[s];
+			},
+			_myDecisionChanged() {
+				if (this.maxPerSecond > 0 && this._rate() > this.maxPerSecond) {
+					console.warn('rate limited');
+					// TODO: retry latest decision after rate goes down.
+					return;
+				}
+				this.$.decisionsChannel.send(this.myDecision);
+			}
+		});
+	</script>
+
+</dom-module>

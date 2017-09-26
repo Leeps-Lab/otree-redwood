@@ -82,7 +82,7 @@ You can let the player choose their initial decision with a normal oTree page.
      })();
    				
      // Get the decision component and other-decision element.
-     var decision = document.querySelector("otree-continuous-decision");
+     var decision = document.querySelector("otree-decision");
      var otherDecision = document.getElementById("other-decision");
    
      // When group decisions changes, update the text of the otherDecision element.
@@ -96,10 +96,10 @@ You can let the player choose their initial decision with a normal oTree page.
      }
    </script>
    
-   // Import the otree-continuous-decision and otree-period webcomponents.
+   // Import the otree-decision and otree-period webcomponents.
    <link
      rel="import"
-     href="/static/otree-redwood/webcomponents/otree-continuous-decision/otree-continuous-decision.html">
+     href="/static/otree-redwood/webcomponents/otree-decision/otree-decision.html">
    <link
      rel="import"
      href="/static/otree-redwood/webcomponents/otree-period/otree-period.html">
@@ -108,7 +108,7 @@ You can let the player choose their initial decision with a normal oTree page.
    {% block content %}
      <!-- Include the components on the page -->
      <otree-period></otree-period>
-     <otree-continuous-decision></otree-continuous-decision>
+     <otree-decision></otree-decision>
    
      <p>Other Decision: <span id="other-decision"></span></p>
    
