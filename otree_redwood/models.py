@@ -157,33 +157,7 @@ class Group(BaseGroup):
             self._default_manager.filter(pk=self.pk).update(**json_fields)
 
 
-class ContinuousDecisionGroup(Group):
-
-    class Meta:
-        abstract = True
-
-    group_decisions = JSONField(null=True)
-
-    def when_all_players_ready(self):
-        self.group_decisions = {}
-        for player in self.get_players():
-            self.group_decisions[player.participant.code] = player.initial_decision()
-        self.save()
-
-    def _on_decisions_event(self, event=None, **kwargs):
-        if not self.ran_ready_function:
-            logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
-            return
-        with track('_on_decisions_event'):
-            if event.value == '' or math.isnan(float(event.value)):
-                logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
-                return
-            self.group_decisions[event.participant.code] = float(event.value)
-            self.save()
-            self.send('group_decisions', self.group_decisions)
-
-
-class DiscreteDecisionGroup(Group):
+class DecisionGroup(Group):
 
     class Meta:
         abstract = True
@@ -192,7 +166,7 @@ class DiscreteDecisionGroup(Group):
     subperiod_group_decisions = JSONField(null=True)
 
     def num_subperiods(self):
-        return 10
+        return None
 
     def period_length(self):
         return 60
@@ -203,15 +177,16 @@ class DiscreteDecisionGroup(Group):
         for player in self.get_players():
             self.group_decisions[player.participant.code] = player.initial_decision()
             self.subperiod_group_decisions[player.participant.code] = player.initial_decision()
-        emitter = DiscreteEventEmitter(
-            self.period_length() / self.num_subperiods(), 
-            self.period_length(),
-            self,
-            self._tick)
-        emitter.start()
+        if self.num_subperiods():
+            emitter = DiscreteEventEmitter(
+                self.period_length() / self.num_subperiods(), 
+                self.period_length(),
+                self,
+                self._subperiod_tick)
+            emitter.start()
         self.save()
 
-    def _tick(self, current_interval, intervals):
+    def _subperiod_tick(self, current_interval, intervals):
         self.refresh_from_db()
         for key, value in self.group_decisions.items():
             self.subperiod_group_decisions[key] = value
@@ -228,3 +203,5 @@ class DiscreteDecisionGroup(Group):
                 return
             self.group_decisions[event.participant.code] = float(event.value)
             self.save()
+            if not self.num_subperiods():
+                self.send('group_decisions', self.group_decisions)
