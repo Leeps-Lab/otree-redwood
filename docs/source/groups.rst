@@ -8,14 +8,15 @@ Groups
 Base Group
 ----------
 
+Source: :py:class:`otree_redwood.models.Group`
+
 The otree-redwood base Group is a building block for more complex behavior.
 By default it uses a ``period_length`` function you implement to set a timer
 that will auto-advance subjects similar to oTree's ``timeout_seconds``
 variable.
 
 You probably don't want to extend this class directly - instead you can
-extend of of this children (e.g. ContinuousDecisionGroup_ or
-DiscreteDecisionGroup_)
+extend DecisionGroup_.
 
 .. code-block:: python
 
@@ -54,10 +55,16 @@ has ended. Generally this means the player closed their browser window or
 turned off their machine. You can override this function to implement behavior
 like pausing the period and notifying group members.
 
-.. _ContinuousDecisionGroup:
+.. _DecisionGroup:
 
-ContinuousDecisionGroup
+DecisionGroup
 -----------------------
+
+Source: :py:class:`otree_redwood.models.DecisionGroup`
+
+DecisionGroup watches for changes on the ``decisions`` channel and sends
+updates to the group on the ``group_decisions`` channel. This works in
+with the :ref:`otree-decision` component.
 
 .. raw:: html
 
@@ -65,36 +72,26 @@ ContinuousDecisionGroup
 
 .. code-block:: python
 
-  from otree_redwood.models import ContinuousDecisionGroup
+  from otree_redwood.models import DecisionGroup
 
-  class Group(ContinuousDecisionGroup):
+  class Group(DecisionGroup):
+
+num_subperiods(self)
+~~~~~~~~~~~~~~~~~~~~
+
+The ``num_subperiods`` function can return an integer or None. The period will
+be divided into ``num_subperiods`` intervals of length ``period_length /
+num_subperiods`` seconds. Each sub-period the current ``group_decisions`` gets
+copied into the ``subperiod_group_decisions``. Effectively this means the
+players can only make decisions at the boundary of every sub-period. E.g. if
+there are 12 sub-periods, players make 12 decisions during the course of the
+period.
 
 group_decisions
 ~~~~~~~~~~~~~~~
 
 ``group_decisions`` contains a dictionary mapping a participant code to their
 current decision value.
-
-.. _DiscreteDecisionGroup:
-
-DiscreteDecisionGroup
----------------------
-
-.. code-block:: python
-
-  from otree_redwood.models import DiscreteDecisionGroup
-
-  class Group(DiscreteDecisionGroup):
-
-seconds_per_tick(self)
-~~~~~~~~~~~~~~~~~~~~~~
-
-The ``seconds_per_tick`` function must return a number of seconds. The period
-will be divided into ``period_length / seconds_per_tick`` sub-periods. Each
-sub-period the current ``group_decisions`` gets copied into the
-``subperiod_group_decisions``. Effectively this means the players can only make
-decisions at the boundary of every sub-period. E.g. if there are 12 sub-periods,
-players make 12 decisions during the course of the period.
 
 subperiod_group_decisions
 ~~~~~~~~~~~~~~~~~~~~~~~~~

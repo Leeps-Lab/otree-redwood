@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class Event(models.Model):
+    """Event stores a single message going in or out across a WebSocket connection.
+    """
 
     class Meta:
         # Default to queries returning most recent Event first.
@@ -70,6 +72,9 @@ class Group(BaseGroup):
         abstract = True
 
     ran_ready_function = models.DateTimeField(null=True)
+    """Set when the :meth:`when_all_players_ready` function has been run.
+    Ensures run-only-once semantics.
+    """
 
     def period_length(self):
         """Implement this to set a timeout on the page. A message will be sent on
@@ -80,9 +85,7 @@ class Group(BaseGroup):
         return None
 
     def when_all_players_ready(self):
-        """Implement this to perform an action for the group once
-        all players are ready.
-        """
+        """Implement this to perform an action for the group once all players are ready."""
 
     def when_player_disconnects(self, player):
         """Implement this to perform an action when a player disconnects."""
@@ -127,6 +130,9 @@ class Group(BaseGroup):
         self.when_player_disconnects(player)
 
     def send(self, channel, payload):
+        """Send a message with the given payload on the given channel.
+        Messages are broadcast to all players in the group.
+        """
         with track('send_channel=' + channel):
             with track('create event'):
                 Event.objects.create(

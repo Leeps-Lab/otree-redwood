@@ -31,24 +31,21 @@ will tell you the version that was installed.
 
 3. Use the otree-redwood classes in your experiment's models.py file.
 
-Instead of extending ``otree.api.BaseGroup``, your ``Group`` class extends one of the
-otree-redwood Groups - either ContinuousDecisionGroup_ or DiscreteDecisionGroup_.
-Your ``Group`` class needs a ``period_length`` function.  This is similar to oTree's
+Instead of extending otree.api.BaseGroup, your Group class extends one of the
+otree-redwood Groups - :ref:`BaseGroup` or :ref:`DecisionGroup`.
+Your Group class needs a ``period_length`` function.  This is similar to oTree's
 ``timeout_seconds`` variable. When the period timer expires players will be
 automatically moved to the next page.
 
-.. _ContinuousDecisionGroup: /otree_redwood.models.html#otree_redwood.models.ContinuousDecisionGroup
-.. _DiscreteDecisionGroup: /otree_redwood.models.html#otree_redwood.models.DiscreteDecisionGroup
-
-You still extend ``otree.api.BasePlayer``, but your ``Player`` class needs an
+You still extend otree.api.BasePlayer, but your Player class needs an
 ``initial_decision`` function. This is the decision the player starts with.
 You can let the player choose their initial decision with a normal oTree page.
 
 .. code-block:: python
 
- from otree_redwood.models import Event, ContinuousDecisionGroup
+ from otree_redwood.models import Event, DecisionGroup
 
- class Group(ContinuousDecisionGroup):
+ class Group(DecisionGroup):
 
    def period_length(self):
      return Constants.period_length
@@ -84,6 +81,14 @@ You can let the player choose their initial decision with a normal oTree page.
      // Get the decision component and other-decision element.
      var decision = document.querySelector("otree-decision");
      var otherDecision = document.getElementById("other-decision");
+
+     // Log period start/end to the JavaScript console.
+     document.querySelector("otree-period").addEventListener('period-start', function(event) {
+       console.log('period started');
+     });
+     document.querySelector("otree-period").addEventListener('period-end', function(event) {
+       console.log('period ended');
+     });
    
      // When group decisions changes, update the text of the otherDecision element.
      decision.addEventListener('group-decisions-changed', function(event) {

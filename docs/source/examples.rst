@@ -3,12 +3,12 @@
 Examples
 ========
 
-.. _ContinuousBimatrix:
+.. _GeneralBimatrix:
 
-`Continuous Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/continuous_bimatrix>`_
+`General Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/bimatrix>`_
 -------------------------------------------------------------------------------------------
 
-Continuous Bimatrix is a re-implementation of the experiment used in "A
+The General Bimatrix is a re-implementation of the experiment used in "A
 Continuous Dilemma", written in oTree using otree-redwood. The experiment
 presents participants with a bimatrix game and lets them select a mixed
 strategy. Their strategy is combined with that of a counterpart to calculate a

@@ -22,7 +22,7 @@ the LEEPS Lab at https://github.com/Leeps-Lab/otree-redwood.
 
 Development is in progress on 3 experiments using otree-redwood:
 
-* :ref:`ContinuousBimatrix`
+* :ref:`GeneralBimatrix`
 * :ref:`StochasticBimatrix`
 * :ref:`ImperfectMonitoring`
 
