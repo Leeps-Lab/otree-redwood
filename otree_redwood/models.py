@@ -21,26 +21,33 @@ logger = logging.getLogger(__name__)
 
 
 class Event(models.Model):
-    """Event stores a single message going in or out across a WebSocket connection.
-    """
+    """Event stores a single message going in or out across a WebSocket connection."""
 
     class Meta:
         # Default to queries returning most recent Event first.
         ordering = ['timestamp']
 
     timestamp = models.DateTimeField(null=False)
+    """Time the event was received or sent by the server."""
     content_type = models.ForeignKey(ContentType, related_name='content_type_events')
+    """Used to relate this Event to an arbitrary Group."""
     group_pk = models.PositiveIntegerField()
+    """Primary key of the Event's related Group."""
     group = GenericForeignKey('content_type', 'group_pk')
+    """The Group the event was sent to/from."""
     channel = models.CharField(max_length=100, null=False)
+    """Channels act as tags to route Events."""
     participant = models.ForeignKey(
         'otree.Participant',
         related_name='+',
         null=True)
+    """The Participant who sent the event - null for server-sent events."""
     value = JSONField()
+    """Arbitrary Event payload."""
 
     @property
     def message(self):
+        """Dictionary representation of the Event appropriate for JSON-encoding."""
         return {
             'timestamp': time.mktime(self.timestamp.timetuple())*1e3 + self.timestamp.microsecond/1e3,
             'group': self.group_pk,
@@ -50,6 +57,7 @@ class Event(models.Model):
         }
 
     def save(self, *args, **kwargs):
+        """Saving an Event automatically sets the timestamp if not already set."""
         if self.timestamp is None:
             self.timestamp = timezone.now()
 
@@ -57,10 +65,13 @@ class Event(models.Model):
 
 
 class Connection(models.Model):
+    """Connections are created and deleted as Participants connect to a WebSocket."""
+
     participant = models.ForeignKey(
         'otree.Participant',
         related_name='+',
         null=True)
+    """Each Participant should have only one connection."""
 
 
 class Group(BaseGroup):
@@ -77,10 +88,10 @@ class Group(BaseGroup):
     """
 
     def period_length(self):
-        """Implement this to set a timeout on the page. A message will be sent on
-        the period_start when all players in the group have connected their websockets.
-        Another message will be send on the period_end channel period_length seconds from
-        the period_start message.
+        """Implement this to set a timeout on the page. A message will be sent
+        on the period_start when all players in the group have connected their
+        websockets. Another message will be send on the period_end channel
+        period_length seconds from the period_start message.
         """
         return None
 
@@ -91,6 +102,10 @@ class Group(BaseGroup):
         """Implement this to perform an action when a player disconnects."""
 
     def _on_connect(self, participant):
+        """Called from the WebSocket consumer. Checks if all players in the
+        have connected; runs :meth:`when_all_players_ready` once all connections
+        are established.
+        """
         if otree.common_internal.USE_REDIS:
             lock = redis_lock.Lock(
                 otree.common_internal.get_redis_conn(),
@@ -122,6 +137,7 @@ class Group(BaseGroup):
                 self._timer.start()
 
     def _on_disconnect(self, participant):
+        """Trigger the :meth:`when_player_disconnects` callback."""
         player = None
         for p in self.get_players():
             if p.participant == participant:
@@ -146,15 +162,15 @@ class Group(BaseGroup):
                     })})
 
     def save(self, *args, **kwargs):
+        """
+        BUG: Django save-the-change, which all oTree models inherit from,
+        doesn't recognize changes to JSONField properties. So saving the model
+        won't trigger a database save. This is a hack, but fixes it so any
+        JSONFields get updated every save. oTree uses a forked version of
+        save-the-change so a good alternative might be to fix that to recognize
+        JSONFields (diff them at save time, maybe?).
+        """
         super().save(*args, **kwargs)
-        '''
-        BUG: Django save-the-change, which all oTree models inherit from, doesn't
-        recognize changes to JSONField properties. So saving the model won't
-        trigger a database save. This is a hack, but fixes it so any JSONFields
-        get updated every save. oTree uses a forked version of save-the-change
-        so a good alternative might be to fix that to recognize JSONFields (diff
-        them at save time, maybe?).
-        '''
         if self.pk is not None:
             json_fields = {}
             for field in self._meta.get_fields():
@@ -164,20 +180,30 @@ class Group(BaseGroup):
 
 
 class DecisionGroup(Group):
+    """DecisionGroup receives Events on the ``decisions`` channel, then
+    broadcasts them back to all members of the group on the ``group_decisions``
+    channel.
+    """
 
     class Meta:
         abstract = True
 
     group_decisions = JSONField(null=True)
+    """:attr:`group_decisions` holds a map from participant code to their current decision."""
     subperiod_group_decisions = JSONField(null=True)
+    """:attr:`subperiod_group_decisions` is a copy of the state of
+    :attr:`group_decisions` at the end of each subperiod.
+    """
 
     def num_subperiods(self):
+        """Override to turn on sub-period behavior. None by default."""
         return None
 
-    def period_length(self):
-        return 60
-
     def when_all_players_ready(self):
+        """Initializes decisions based on ``player.initial_decision()``.
+        If :attr:`num_subperiods` is set, starts a timed task to run the
+        sub-periods.
+        """
         self.group_decisions = {}
         self.subperiod_group_decisions = {}
         for player in self.get_players():
@@ -193,6 +219,7 @@ class DecisionGroup(Group):
         self.save()
 
     def _subperiod_tick(self, current_interval, intervals):
+        """Tick each sub-period, copying group_decisions to subperiod_group_decisions.""" 
         self.refresh_from_db()
         for key, value in self.group_decisions.items():
             self.subperiod_group_decisions[key] = value
@@ -200,6 +227,10 @@ class DecisionGroup(Group):
         self.save()
 
     def _on_decisions_event(self, event=None, **kwargs):
+        """Called when an Event is received on the decisions channel. Saves
+        the value in group_decisions. If num_subperiods is None, immediately
+        broadcasts the event back out on the group_decisions channel.
+        """
         if not self.ran_ready_function:
             logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
             return

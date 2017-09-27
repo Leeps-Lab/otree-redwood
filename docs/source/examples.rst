@@ -8,6 +8,8 @@ Examples
 `General Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/bimatrix>`_
 -------------------------------------------------------------------------------------------
 
+.. image:: bimatrix_screenshot.png
+
 The General Bimatrix is a re-implementation of the experiment used in "A
 Continuous Dilemma", written in oTree using otree-redwood. The experiment
 presents participants with a bimatrix game and lets them select a mixed
@@ -22,6 +24,8 @@ times over the course of a 2-3 minute period.
 `Stochastic Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/stochastic_bimatrix>`_
 -------------------------------------------------------------------------------------------
 
+.. image:: stochastic_bimatrix_screenshot.png
+
 Stochastic Bimatrix is similar to Continuous Bimatrix, but with a twist. The
 bimatrix game being played can switch between 2 matrices over the course of a
 2-3 minute period. Switching is controlled with a stochastic variable set by
@@ -33,6 +37,8 @@ websocket events, as opposed to just simply rebroadcasting them to the group.
 
 `Imperfect Monitoring <https://github.com/Leeps-Lab/oTree/tree/master/imperfect_monitoring>`_
 ---------------------------------------------------------------------------------------------
+
+.. image:: imperfect_monitoring_screenshot.png
 
 Imperfect Monitoring is another bimatrix game with a twist. First, participants
 can only choose a pure strategy from the 2 alternatives. Second, players are
