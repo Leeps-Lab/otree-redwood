@@ -77,6 +77,7 @@
 				if (this.myDecision === null) {
 					this.myDecision = this.groupDecisions[pcode];
 				}
+				this.fire('group-decisions-changed');
 			},
 			_computeOtherDecision(groupDecisions) {
 				this.groupDecisions = this.groupDecisions || {};
