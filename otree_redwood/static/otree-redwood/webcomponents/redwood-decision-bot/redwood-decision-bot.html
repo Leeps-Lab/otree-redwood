@@ -2,21 +2,21 @@
 	rel="import"
 	href="/static/bower_components/polymer/polymer.html" />
 <link rel="import" href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
-<link rel="import" href="/static/otree-redwood/webcomponents/otree-period/otree-period.html">
+<link rel="import" href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-decision-bot
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-decision-bot
 -->
-<dom-module id="otree-decision-bot">
+<dom-module id="redwood-decision-bot">
 
 	<template>
         <otree-constants id="constants"
         	debug="{{ debug }}">
         </otree-constants>
-        <otree-period
+        <redwood-period
             running="{{ _isPeriodRunning }}">
-        </otree-period>
+        </redwood-period>
         <template is="dom-if" if="[[ debug ]]">
 	        <div class="well">
 		        <p>Continuous Decision Bot</p>
@@ -61,7 +61,7 @@
 
 	<script>
 		Polymer({
-			is: 'otree-decision-bot',
+			is: 'redwood-decision-bot',
 			properties: {
 				myDecision: {
                     type: Number,
@@ -88,7 +88,7 @@
                 	type: Boolean,
                 	value: false
                 },
-                // set by otree-period
+                // set by redwood-period
                 _isPeriodRunning: {
                 	type: Boolean,
                 	observer: '_isPeriodRunningChanged'

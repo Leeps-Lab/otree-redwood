@@ -8,10 +8,10 @@
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-redwood-debug
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-debug
 -->
 
-<dom-module id="otree-redwood-debug">
+<dom-module id="redwood-debug">
 
 	<template>
 		<style>
@@ -79,7 +79,7 @@
             }
         }
 		Polymer({
-			is: 'otree-redwood-debug',
+			is: 'redwood-debug',
 			properties: {
 				eventsByAppNameThenGroup: {
 					type: Object,
@@ -186,14 +186,14 @@
 				});
 				this.currTimeBand = this.chart.xAxis[0].plotLinesAndBands[0];
 				this.currEventIndex = 0;
-				this.session = window.localStorage.getItem('otree-redwood-debug:session');
+				this.session = window.localStorage.getItem('redwood-debug:session');
 				if (this.session) {
 					this._loadSessionEvents();
 				}
 			},
 			_loadSessionEvents() {
 				if (this.session) {
-					window.localStorage.setItem('otree-redwood-debug:session', this.session);
+					window.localStorage.setItem('redwood-debug:session', this.session);
 					this.loading = true;
 					$.getJSON('/redwood/api/events/session/' + this.session + '/')
 					.done(this._initEvents.bind(this))

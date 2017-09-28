@@ -4,25 +4,25 @@
 
 <link
 	rel="import" 
-	href="/static/otree-redwood/webcomponents/otree-events/otree-events.html">
+	href="/static/otree-redwood/webcomponents/redwood-events/redwood-events.html">
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-channel
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-channel
 -->
-<dom-module id="otree-channel">
+<dom-module id="redwood-channel">
 
 	<template>
-		<otree-events
+		<redwood-events
 			id="events"
 			on-event="_handleEvent">
-		</otree-channel>
+		</redwood-channel>
 	</template>
 
 	<script>
 
 		Polymer({
-			is: 'otree-channel',
+			is: 'redwood-channel',
 			properties: {
 				channel: {
 					type: String

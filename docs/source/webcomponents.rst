@@ -27,17 +27,17 @@ tag.
     <!-- Import the component -->
     <link
       rel="import"
-      href="{% static "webcomponents/otree-period/otree-period.html" %}">
+      href="{% static "webcomponents/redwood-period/redwood-period.html" %}">
   </head>
 
   <body>
     <!-- Use the component in your page -->
-    <otree-period></otree-period>
+    <redwood-period></redwood-period>
   </body>
 
 .. _otree-constants:
 
-`otree-constants <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-channel/otree-channel.html>`_
+`otree-constants <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-channel/redwood-channel.html>`_
 -----------------------------
 
 It's useful to have an easy way to access oTree template variables in JavaScript
@@ -74,25 +74,25 @@ required in any template using the otree-redwood components:
     </script>
   {% endblock %}
 
-.. _otree-events:
+.. _redwood-events:
 
-`otree-events <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-events/otree-events.html>`_
+`redwood-events <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-events/redwood-events.html>`_
 ------------
 
-otree-events is the lowest-level component. It maintains a single WebSocket
+redwood-events is the lowest-level component. It maintains a single WebSocket
 connection to the oTree server, reconnecting if possible. The socket is a
-singleton - if you put multiple otree-events on a single page there will still
+singleton - if you put multiple redwood-events on a single page there will still
 only be one socket opened.
 
-otree-events has some facilities for displaying connection status and ping if
+redwood-events has some facilities for displaying connection status and ping if
 the oTree.debug variable is set in the oTree constants.
 
-.. _otree-channel:
+.. _redwood-channel:
 
-`otree-channel <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-channel/otree-channel.html>`_
+`redwood-channel <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-channel/redwood-channel.html>`_
 -------------
 
-otree-channel lets you send and receive events on a given channel. This works
+redwood-channel lets you send and receive events on a given channel. This works
 in conjunction with the groups from otree-redwood.
 
 For example, let's say we want to let subjects send and receive orders on the
@@ -119,12 +119,12 @@ In your page template:
 
 .. code-block:: html
 
-  <!-- see above to import the otree-channel tag and include the oTree constants -->
+  <!-- see above to import the redwood-channel tag and include the oTree constants -->
 
-  <otree-channel
+  <redwood-channel
     id="ordersChannel"
     channel="orders">
-  </otree-channel>
+  </redwood-channel>
 
   <button on-click="sendOrder">Send Order</button>
 
@@ -151,38 +151,38 @@ In your page template:
     console.log(event.detail.payload); // fakeOrder, above
   });
 
-.. _otree-decision:
+.. _redwood-decision:
 
-`otree-decision <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-decision/otree-decision.html>`_
+`redwood-decision <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html>`_
 --------------
 
-otree-decision makes it easy to handle a single decision variable that each
+redwood-decision makes it easy to handle a single decision variable that each
 player can set. The decision variable can be a number, boolean, string, or even
 an Object. At any given point in time each player only has one value for their
 decision forming a set of decisions for the group.
 
-.. _otree-decision-bot:
+.. _redwood-decision-bot:
 
-`otree-decision-bot <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-decision-bot/otree-decision-bot.html>`_
+`redwood-decision-bot <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-decision-bot/redwood-decision-bot.html>`_
 ------------------
 
-otree-decision-bot is useful for testing - it randomly sets the player's
-decision in otree-decision to a numeric value.
+redwood-decision-bot is useful for testing - it randomly sets the player's
+decision in redwood-decision to a numeric value.
 
-.. _otree-period:
+.. _redwood-period:
 
-`otree-period <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-period/otree-period.html>`_
+`redwood-period <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-period/redwood-period.html>`_
 ------------
 
-otree-period listens for period-start and period-end events on the "state"
+redwood-period listens for period-start and period-end events on the "state"
 channel. When the period-end event is seen, it automatically moves players on
 to the next oTree page.
 
-.. _otree-redwood-debug:
+.. _redwood-debug:
 
-`otree-redwood-debug <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/otree-redwood-debug/otree-redwood-debug.html>`_
+`redwood-debug <https://github.com/Leeps-Lab/otree-redwood/tree/master/otree_redwood/static/otree-redwood/webcomponents/redwood-debug/redwood-debug.html>`_
 -------------------
 
-otree-redwood-debug is a utility for testing - it can fetch Events from previous
-sessions from the oTree server and replay these events back to the otree-events
+redwood-debug is a utility for testing - it can fetch Events from previous
+sessions from the oTree server and replay these events back to the redwood-events
 component.

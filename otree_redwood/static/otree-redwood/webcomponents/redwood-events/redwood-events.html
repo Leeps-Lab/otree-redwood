@@ -8,9 +8,9 @@
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-events
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-events
 -->
-<dom-module id="otree-events">
+<dom-module id="redwood-events">
 
 	<template>
     	<otree-constants id="constants" debug="{{ debug }}"></otree-constants>
@@ -37,7 +37,7 @@
 		var listeners = [];
 
 		Polymer({
-			is: 'otree-events',
+			is: 'redwood-events',
 			properties: {
 				master: {
 					type: Boolean,

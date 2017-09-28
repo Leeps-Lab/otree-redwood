@@ -4,32 +4,32 @@
 
 <link
     rel="import"
-    href="/static/otree-redwood/webcomponents/otree-channel/otree-channel.html" />
+    href="/static/otree-redwood/webcomponents/redwood-channel/redwood-channel.html" />
 <link
 	rel="import" 
 	href="/static/otree-redwood/webcomponents/otree-constants/otree-constants.html">
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-decision
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-decision
 -->
-<dom-module id="otree-decision">
+<dom-module id="redwood-decision">
 
 	<template>
     	<otree-constants id="constants"></otree-constants>
-    	<otree-channel
+    	<redwood-channel
     		id="decisionsChannel"
     		channel="decisions">
-	    </otree-channel>
-    	<otree-channel
+	    </redwood-channel>
+    	<redwood-channel
     		channel="group_decisions"
     		on-event="_handleGroupDecisionsEvent">
-	    </otree-channel>
+	    </redwood-channel>
 	</template>
 
 	<script>
 		Polymer({
-			is: 'otree-decision',
+			is: 'redwood-decision',
 			properties: {
 				initialDecision: {
 					type: Number,

@@ -64,7 +64,7 @@ Source: :py:class:`otree_redwood.models.DecisionGroup`
 
 DecisionGroup watches for changes on the ``decisions`` channel and sends
 updates to the group on the ``group_decisions`` channel. This works in
-with the :ref:`otree-decision` component.
+with the :ref:`redwood-decision` component.
 
 .. raw:: html
 

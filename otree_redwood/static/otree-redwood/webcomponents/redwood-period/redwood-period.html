@@ -3,24 +3,24 @@
 	href="/static/bower_components/polymer/polymer.html" />
 <link
     rel="import"
-    href="/static/otree-redwood/webcomponents/otree-channel/otree-channel.html" />
+    href="/static/otree-redwood/webcomponents/redwood-channel/redwood-channel.html" />
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-period
+	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-period
 -->
-<dom-module id="otree-period">
+<dom-module id="redwood-period">
 
 	<template>
-    	<otree-channel
+    	<redwood-channel
     		channel="state"
     		on-event="_handleStateEvent">
-	    </otree-channel>
+	    </redwood-channel>
 	</template>
 
 	<script>
 		Polymer({
-			is: 'otree-period',
+			is: 'redwood-period',
 			properties: {
 				running: {
 					type: Boolean,

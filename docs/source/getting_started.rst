@@ -79,14 +79,14 @@ You can let the player choose their initial decision with a normal oTree page.
      })();
    				
      // Get the decision component and other-decision element.
-     var decision = document.querySelector("otree-decision");
+     var decision = document.querySelector("redwood-decision");
      var otherDecision = document.getElementById("other-decision");
 
      // Log period start/end to the JavaScript console.
-     document.querySelector("otree-period").addEventListener('period-start', function(event) {
+     document.querySelector("redwood-period").addEventListener('period-start', function(event) {
        console.log('period started');
      });
-     document.querySelector("otree-period").addEventListener('period-end', function(event) {
+     document.querySelector("redwood-period").addEventListener('period-end', function(event) {
        console.log('period ended');
      });
    
@@ -101,19 +101,19 @@ You can let the player choose their initial decision with a normal oTree page.
      }
    </script>
    
-   // Import the otree-decision and otree-period webcomponents.
+   // Import the redwood-decision and redwood-period webcomponents.
    <link
      rel="import"
-     href="/static/otree-redwood/webcomponents/otree-decision/otree-decision.html">
+     href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
    <link
      rel="import"
-     href="/static/otree-redwood/webcomponents/otree-period/otree-period.html">
+     href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
    {% endblock %}
    
    {% block content %}
      <!-- Include the components on the page -->
-     <otree-period></otree-period>
-     <otree-decision></otree-decision>
+     <redwood-period></redwood-period>
+     <redwood-decision></redwood-decision>
    
      <p>Other Decision: <span id="other-decision"></span></p>
    
