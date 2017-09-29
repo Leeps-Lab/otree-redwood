@@ -2,8 +2,43 @@
 		rel="import"
 		href="/static/bower_components/polymer/polymer.html" />
 
+
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#otree-constants
+`<otree-constants>` binds oTree template variables to itself.
+
+It's useful to have an easy way to access oTree template variables in JavaScript
+without double-curly brackets everywhere (e.g. "{{ }}"). Also, using JavaScript
+variables makes it possible to test your JavaScript in a more isolated way than
+running a full experiment.
+
+`<otree-constants>` requires you to include a small bit of code to set useful
+variables from the oTree template. You can access these either from JavaScript
+by using the "oTree" object, or with the otree-constants tag itself.
+
+`<otree-constants>` is used by most of the other webcomponents, so this block is
+required in any template using the otree-redwood components:
+
+```
+<script>
+ 	var oTree = oTree || {};
+   (function() {
+     oTree.group = parseInt("{{ player.group.pk }}");
+     oTree.group = isNaN(oTree.group) ? null : oTree.group;
+     oTree.role = "{{ player.role }}";
+     oTree.participantCode = "{{ player.participant.code }}";
+     oTree.appName = "{{ subsession.app_name }}";
+     oTree.idInGroup = "{{ player.id_in_group }}";
+     oTree.csrfToken = "{{ csrf_token }}";
+     {% if view.is_debug %}
+     oTree.debug = true;
+     {% else %}
+     oTree.debug = false;
+     {% endif %}
+   })();
+ </script>
+ ```
+
+https://otree-redwood.readthedocs.io/webcomponents.html#otree-constants
 -->
 <dom-module id="otree-constants">
 
