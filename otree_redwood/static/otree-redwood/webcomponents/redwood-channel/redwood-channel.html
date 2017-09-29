@@ -81,15 +81,27 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 		Polymer({
 			is: 'redwood-channel',
 			properties: {
+				/* Channel to send/receive messages on. */
 				channel: {
 					type: String
 				}
+				/**
+				 * Fired when a message is received on the channel.
+				 *	 
+				 * @event event
+				 * @param {event} otree_redwood.models.Event.message
+				 */
 			},
 			_handleEvent(event) {
 				if (event.detail.channel === this.channel) {
 					this.fire('event', event.detail);
 				}
 			},
+			/**
+			 * Send a message on the channel.
+			 *
+			 * @param {Object} payload
+			 */
 			send(payload) {
 				this.$.events.send(this.channel, payload);
 			}

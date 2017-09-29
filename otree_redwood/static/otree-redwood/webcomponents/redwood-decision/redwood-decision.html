@@ -38,30 +38,58 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 		Polymer({
 			is: 'redwood-decision',
 			properties: {
+				/* Initial decision the player starts with */
 				initialDecision: {
-					type: Number,
+					type: Object,
 				},
+				/**
+				 * Map from participant code to decision variable
+				 *
+				 * e.g. if there are two participants, `n282bsh4` and
+				 * `s7zznoq4` and numeric decisions, this might be:
+				 * ```javascript
+				 * {
+				 *   "s7zznoq4": 10,
+				 *   "n282bsh4": 20
+				 * }
+				 * ```
+				 */
 				groupDecisions: {
 					type: Object,
 					readonly: true,
 					notify: true,
 					value: () => { return {} }
 				},
+				/**
+				 * Your decision.
+				 *
+				 * When set, this will send a message to the server. Once the
+				 * server sends out the `group_decisions` message, the change
+				 * will be reflected in `myCurrentDecision`.
+				 */
 				myDecision: {
-					type: Number,
+					type: Object,
 					notify: true,
 					observer: '_myDecisionChanged'
 				},
+				/* Your decision according to the server. */
 				myCurrentDecision: {
-					type: Number,
+					type: Object,
+					readonly: true,
 					notify: true,
 				},
+				/* A utility - if there are 2 players in the group, this is
+				 * the decision value of the other player.
+				 */
 				otherDecision: {
-					type: Number,
+					type: Object,
 					readonly: true,
 					notify: true,
 					computed: '_computeOtherDecision(groupDecisions.*)'
 				},
+				/* Sets a rate-limit on the number of times you can change
+				 * `myDecision` in one second.
+				 */
 				maxPerSecond: {
 					type: Number,
 					value: 0
