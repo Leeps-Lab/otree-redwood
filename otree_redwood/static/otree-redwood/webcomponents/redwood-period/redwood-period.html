@@ -28,11 +28,25 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 		Polymer({
 			is: 'redwood-period',
 			properties: {
+				/**
+				 * true after the period_start message has been received and
+				 * before the period_end message has been received.
+				 */
 				running: {
 					type: Boolean,
 					value: false,
 					notify: true
 				}
+				/**
+				 * Fired when the `period_start` message is received.
+				 * 
+				 * @event period-start
+				 */
+				/**
+				 * Fired when the `period_end` message is received.
+				 *	 
+				 * @event period-end
+				 */
 			},
 			_handleStateEvent(event) {
 				const state = event.detail.payload;
