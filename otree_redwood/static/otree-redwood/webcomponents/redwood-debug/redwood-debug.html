@@ -8,9 +8,14 @@
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-debug
--->
 
+`<redwood-debug>` is a utility for testing - it can fetch Events from previous
+sessions from the oTree server and replay these events back to the
+`<redwood-events>` component.
+
+https://otree-redwood.readthedocs.io/webcomponents.html
+
+-->
 <dom-module id="redwood-debug">
 
 	<template>
@@ -53,31 +58,6 @@
 	</template>
 
 	<script>
-        class ReconnectingWebSocket {
-            constructor() {
-                setTimeout(() => { this.readyState = 1; this.onopen(); }, 1000);
-            }
-            onopen() {
-            	console.log('mock onopen called');
-            }
-            onmessage(msg) {
-            	console.log('mock msg called:', msg);
-            }
-            onerror() {
-            	console.log('mock onerror called');
-            }
-            onclose() {
-            	console.log('mock onclose called');
-            }
-            send(msg) {
-                event = JSON.parse(msg);
-                if (event.channel == 'echo') {
-                    this.onmessage({
-                        data: JSON.stringify(event)
-                    });
-                }
-            }
-        }
 		Polymer({
 			is: 'redwood-debug',
 			properties: {
@@ -327,6 +307,31 @@
 				this.paused = false;
 			},
 		});
+        class ReconnectingWebSocket {
+            constructor() {
+                setTimeout(() => { this.readyState = 1; this.onopen(); }, 1000);
+            }
+            onopen() {
+            	console.log('mock onopen called');
+            }
+            onmessage(msg) {
+            	console.log('mock msg called:', msg);
+            }
+            onerror() {
+            	console.log('mock onerror called');
+            }
+            onclose() {
+            	console.log('mock onclose called');
+            }
+            send(msg) {
+                event = JSON.parse(msg);
+                if (event.channel == 'echo') {
+                    this.onmessage({
+                        data: JSON.stringify(event)
+                    });
+                }
+            }
+        }
 	</script>
 
 </dom-module>

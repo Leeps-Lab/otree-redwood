@@ -8,7 +8,17 @@
 
 
 <!--
-	https://otree-redwood.readthedocs.io/webcomponents.html#redwood-events
+
+`<redwood-events>` is the lowest-level component. It maintains a single
+WebSocket connection to the oTree server, reconnecting if possible. The socket
+is a singleton - if you put multiple `<redwood-events>` on a single page there
+will still only be one socket opened.
+
+`<redwood-events>` has some facilities for displaying connection status and
+ping if the `oTree.debug` variable is set in the oTree constants.
+
+https://otree-redwood.readthedocs.io/webcomponents.html
+
 -->
 <dom-module id="redwood-events">
 
