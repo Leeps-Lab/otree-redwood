@@ -1,4 +1,5 @@
 import os
+import re
 from setuptools import find_packages, setup
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
@@ -7,9 +8,18 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+def read_version():
+    with open('otree_redwood/__init__.py', 'r') as f:
+        version_match = re.search(
+            r"^__version__ = ['\"]([^'\"]*)['\"]",
+            f.read(), re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 setup(
     name='otree-redwood',
-    version='0.6.0',
+    version=read_version(),
     packages=find_packages(),
     include_package_data=True,
     license='MIT License',
