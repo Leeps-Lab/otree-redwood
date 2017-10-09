@@ -10,7 +10,7 @@ http://otree-redwood.readthedocs.io/en/latest/
 Pushing to PyPI
 ---------------
 
-Increment version number in ``setup.py``.
+Increment version number in ``otree_redwood/__init__.py``.
 
 You need a ~/.pypirc like this:
 
