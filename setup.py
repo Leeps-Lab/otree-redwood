@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from setuptools import find_packages, setup
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
@@ -45,12 +46,11 @@ setup(
         'Sphinx',
         'sphinx-autobuild',
         'sphinx-rtd-theme',
-        'asgi_redis==1.4.2',
         'chan>=0.3.1,<1',
         'channels==1.1.6',
         'daphne>=1.0.0,<2',
         'Django==1.8.8',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3'
-    ]
+    ] + ['asgi_redis==1.4.2'] if 'win' not in sys.platform else []
 )
