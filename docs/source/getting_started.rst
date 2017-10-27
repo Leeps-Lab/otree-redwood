@@ -3,6 +3,15 @@
 Getting Started
 ===============
 
+Python Development Libraries
+----------------------------
+
+If you see an error that looks like `error: Python.h: No such file or directory`, you need to install the Python development libraries. These should be included on OS X. On Linux, you can install them with your package manager, for example:
+
+.. code-block:: bash
+
+ > sudo apt-get install python-dev
+
 Option 1 - Clone the Leeps-Lab oTree repository.
 ------------------------------------------------
 
