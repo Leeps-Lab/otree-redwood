@@ -235,10 +235,7 @@ class DecisionGroup(Group):
             logger.warning('ignoring decision from {} before when_all_players_ready: {}'.format(event.participant.code, event.value))
             return
         with track('_on_decisions_event'):
-            if event.value == '' or math.isnan(float(event.value)):
-                logger.warning('ignoring bad value in decision from {}: {}'.format(event.participant.code, event.value))
-                return
-            self.group_decisions[event.participant.code] = float(event.value)
+            self.group_decisions[event.participant.code] = event.value
             self.save()
             if not self.num_subperiods():
                 self.send('group_decisions', self.group_decisions)

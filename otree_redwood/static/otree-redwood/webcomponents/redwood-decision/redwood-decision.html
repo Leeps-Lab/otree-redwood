@@ -121,18 +121,13 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 				this.groupDecisions = this.groupDecisions || {};
 				const pcode = this.$.constants.participantCode;
 
-				// group decisions should have two entries maximum
-				console.assert(
-					Object.keys(this.groupDecisions).length <= 2,
-					'too many players in group decisions');
-
 				for (let key in this.groupDecisions) {
-                    if (key != pcode) {
-                    	return this.groupDecisions[key];
-                    }
-                }
+            if (key != pcode) {
+                return this.groupDecisions[key];
+            }
+        }
 
-                return null;
+        return null;
 			},
 			_rate() {
 				const s = new Date().getSeconds();
