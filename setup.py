@@ -43,14 +43,16 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires=[
-        'Sphinx',
-        'sphinx-autobuild',
-        'sphinx-rtd-theme',
-        'chan>=0.3.1,<1',
-        'channels==1.1.6',
-        'daphne>=1.0.0,<2',
-        'Django==1.8.8',
+        # Required for development, but not installation:
+        #'Sphinx',
+        #'sphinx-autobuild',
+        #'sphinx-rtd-theme',
+        # Recommended:
+        #'asgi_redis>=1.4,<2'
+        #'daphne>=1,<2',
+        'chan>=0.3,<1',
+        'channels>=1',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3'
-    ] + ['asgi_redis==1.4.2'] if 'win' not in sys.platform else []
+    ]
 )

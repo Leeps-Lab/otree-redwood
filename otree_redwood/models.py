@@ -1,4 +1,5 @@
 from channels import Group as ChannelGroup
+from contextlib import contextmanager
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
@@ -9,7 +10,7 @@ import logging
 import math
 import otree.common_internal
 from otree.models import BaseGroup
-from otree.views.abstract import global_lock
+from otree.views.abstract import get_redis_lock
 from otree_redwood.stats import track 
 from otree_redwood.utils import DiscreteEventEmitter
 import redis_lock
@@ -106,14 +107,9 @@ class Group(BaseGroup):
         have connected; runs :meth:`when_all_players_ready` once all connections
         are established.
         """
-        if otree.common_internal.USE_REDIS:
-            lock = redis_lock.Lock(
-                otree.common_internal.get_redis_conn(),
-                '{}-{}'.format(self.session.pk, self.pk),
-                expire=60,
-                auto_renewal=True)
-        else:
-            lock = global_lock()
+        lock = get_redis_lock()
+        if not lock:
+            lock = fake_lock()
 
         with lock:
             self.refresh_from_db()
@@ -177,6 +173,13 @@ class Group(BaseGroup):
                 if isinstance(field, JSONField):
                     json_fields[field.attname] = getattr(self, field.attname)
             self._default_manager.filter(pk=self.pk).update(**json_fields)
+
+
+@contextmanager
+def fake_lock():
+    logger.warning('using fake lock - install redis in production')
+    yield
+    logger.warning('exiting fake lock - install redis in production')
 
 
 class DecisionGroup(Group):
