@@ -49,10 +49,14 @@ setup(
         #'sphinx-rtd-theme',
         # Recommended:
         #'asgi_redis>=1.4,<2'
-        #'daphne>=1,<2',
+        'daphne>=1,<2',
         'chan>=0.3,<1',
         'channels>=1',
         'jsonfield>=2,<3',
-        'mockredispy>=2.9.0,<3'
+        'mockredispy>=2.9.0,<3',
+				'otree'
+    ],
+		dependency_links=[
+        'git+ssh://git@github.com/Leeps-Lab/otree-core.git@master#egg=otree'
     ]
 )

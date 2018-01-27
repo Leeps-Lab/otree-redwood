@@ -172,7 +172,7 @@ class Group(BaseGroup):
             for field in self._meta.get_fields():
                 if isinstance(field, JSONField):
                     json_fields[field.attname] = getattr(self, field.attname)
-            self._default_manager.filter(pk=self.pk).update(**json_fields)
+            self.__class__._default_manager.filter(pk=self.pk).update(**json_fields)
 
 
 @contextmanager
