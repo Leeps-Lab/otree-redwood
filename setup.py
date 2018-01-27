@@ -54,9 +54,9 @@ setup(
         'channels>=1',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
-				'otree'
+        'otree'
     ],
 		dependency_links=[
-        'git+ssh://git@github.com/Leeps-Lab/otree-core.git@master#egg=otree'
+        'git+ssh://git@github.com/Leeps-Lab/otree-core.git@master'
     ]
 )
