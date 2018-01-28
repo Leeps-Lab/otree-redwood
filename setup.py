@@ -57,6 +57,6 @@ setup(
         'otree'
     ],
 		dependency_links=[
-        'git+ssh://git@github.com/Leeps-Lab/otree-core.git@master'
+        'https://github.com/Leeps-Lab/otree-core/tarball/master#egg=otree'
     ]
 )
