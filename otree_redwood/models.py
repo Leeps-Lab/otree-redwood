@@ -103,7 +103,7 @@ class Group(BaseGroup):
         """Implement this to perform an action when a player disconnects."""
 
     def _on_connect(self, participant):
-        """Called from the WebSocket consumer. Checks if all players in the
+        """Called from the WebSocket consumer. Checks if all players in the group
         have connected; runs :meth:`when_all_players_ready` once all connections
         are established.
         """
