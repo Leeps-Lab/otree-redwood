@@ -12,10 +12,9 @@ class DiscreteEventEmitter():
         self.intervals = self.period_length / self.interval
         self.callback = callback
         self.current_interval = 0
-        self.start_time = time.time()
         if self.group not in _timers:
             # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
-            self.timer = threading.Timer(self._time, self._tick)
+            self.timer = threading.Timer(self.interval, self._tick)
             _timers[self.group] = self.timer
         else:
             self.timer = None
@@ -35,6 +34,7 @@ class DiscreteEventEmitter():
 
     def start(self):
         if self.timer:
+            self.start_time = time.time()
             self.timer.start()
 
     def stop(self):
