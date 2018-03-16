@@ -51,12 +51,8 @@ setup(
         #'asgi_redis>=1.4,<2'
         'daphne>=1,<2',
         'chan>=0.3,<1',
-        'channels>=1',
+        'channels>=1,<2',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
-        'otree'
     ],
-		dependency_links=[
-        'https://github.com/Leeps-Lab/otree-core/tarball/master#egg=otree'
-    ]
 )
