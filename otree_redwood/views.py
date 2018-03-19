@@ -14,7 +14,7 @@ from otree_redwood import stats
 from otree_redwood.models import Event, Connection
 
 
-def AppSpecificExportCSV(app_name, display_name, get_output_table):
+def AppSpecificExportCSV(app_name, display_name, get_output_table, get_output_table_header):
 
     class ExportCSV(vanilla.View):
 
@@ -44,9 +44,8 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table):
             )
 
             w = csv.writer(response)
-            for i, (header, rows) in enumerate(tables):
-                if i == 0:
-                    w.writerow(header)
+            w.writerow(get_output_table_header())
+            for rows in tables:
                 w.writerows(rows)
 
             return response
@@ -104,5 +103,6 @@ for session_config in SESSION_CONFIGS_DICT.values():
     except ImportError:
         continue
     table_fn = getattr(module, 'get_output_table', None)
-    if table_fn:
-        app_specific_exports.append(AppSpecificExportCSV(app_name, display_name, table_fn))
+    header_fn = getattr(module, 'get_output_table_header', None)
+    if table_fn and header_fn:
+        app_specific_exports.append(AppSpecificExportCSV(app_name, display_name, table_fn, header_fn))
