@@ -168,9 +168,10 @@ class Group(BaseGroup):
         """
         super().save(*args, **kwargs)
         if self.pk is not None:
+            update_fields = kwargs.get('update_fields')
             json_fields = {}
             for field in self._meta.get_fields():
-                if isinstance(field, JSONField):
+                if isinstance(field, JSONField) and (update_fields is None or field.attname in update_fields):
                     json_fields[field.attname] = getattr(self, field.attname)
             self.__class__._default_manager.filter(pk=self.pk).update(**json_fields)
 
@@ -227,7 +228,7 @@ class DecisionGroup(Group):
         for key, value in self.group_decisions.items():
             self.subperiod_group_decisions[key] = value
         self.send('group_decisions', self.subperiod_group_decisions)
-        self.save()
+        self.save(update_fields=['subperiod_group_decisions'])
 
     def _on_decisions_event(self, event=None, **kwargs):
         """Called when an Event is received on the decisions channel. Saves
@@ -239,6 +240,6 @@ class DecisionGroup(Group):
             return
         with track('_on_decisions_event'):
             self.group_decisions[event.participant.code] = event.value
-            self.save()
+            self.save(update_fields=['group_decisions'])
             if not self.num_subperiods():
                 self.send('group_decisions', self.group_decisions)
