@@ -5,7 +5,7 @@ import time
 _timers = {}
 class DiscreteEventEmitter():
 
-    def __init__(self, interval, period_length, group, callback):
+    def __init__(self, interval, period_length, group, callback, start_immediate=False):
         self.interval = float(interval)
         self.period_length = period_length
         self.group = group
@@ -14,7 +14,7 @@ class DiscreteEventEmitter():
         self.current_interval = 0
         if self.group not in _timers:
             # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
-            self.timer = threading.Timer(self.interval, self._tick)
+            self.timer = threading.Timer(0 if start_immediate else self.interval, self._tick)
             _timers[self.group] = self.timer
         else:
             self.timer = None
