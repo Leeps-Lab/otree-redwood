@@ -5,7 +5,9 @@
   "BASE_DIR":"/home/jpettit/code/otree/otree-redwood/docs",
   "BOTS_CHECK_HTML":true,
   "INSTALLED_APPS":[
+	  	"django.contrib.auth",
 		"django.contrib.contenttypes",
+		"otree",
 		"otree_redwood"
   ],
   "INSTALLED_OTREE_APPS":[],

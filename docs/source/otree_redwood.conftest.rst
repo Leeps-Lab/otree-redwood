@@ -1,5 +1,5 @@
-otree\_redwood\.conftest module
-===============================
+otree\_redwood.conftest module
+==============================
 
 .. automodule:: otree_redwood.conftest
     :members:

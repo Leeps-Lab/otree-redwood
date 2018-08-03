@@ -1,5 +1,5 @@
-otree\_redwood\.otree\_extensions package
-=========================================
+otree\_redwood.otree\_extensions package
+========================================
 
 Submodules
 ----------

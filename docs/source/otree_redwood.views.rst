@@ -1,5 +1,5 @@
-otree\_redwood\.views module
-============================
+otree\_redwood.views module
+===========================
 
 .. automodule:: otree_redwood.views
     :members:

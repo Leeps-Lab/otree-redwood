@@ -1,5 +1,5 @@
-otree\_redwood\.otree\_extensions\.routing module
-=================================================
+otree\_redwood.otree\_extensions.routing module
+===============================================
 
 .. automodule:: otree_redwood.otree_extensions.routing
     :members:

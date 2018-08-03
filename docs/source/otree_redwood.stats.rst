@@ -1,5 +1,5 @@
-otree\_redwood\.stats module
-============================
+otree\_redwood.stats module
+===========================
 
 .. automodule:: otree_redwood.stats
     :members:

@@ -257,10 +257,12 @@ class SubsessionSilosMixin():
     call `group_randomly_in_silos` in `Subsession.before_session_starts` and pass it the desired number
     of groups in each silo:
 
-    class Subsession(BaseSubsession, SubsessionSilosMixin):
+    .. code-block:: python
+    
+        class Subsession(BaseSubsession, SubsessionSilosMixin):
 
-        def before_session_starts:
-            self.group_randomly_in_silos(2)
+            def before_session_starts:
+                self.group_randomly_in_silos(2)
     
     If the total number of groups is not a multiple of `groups_per_silo`, then one of the generated
     silos will have fewer than `groups_per_silo` groups in it.

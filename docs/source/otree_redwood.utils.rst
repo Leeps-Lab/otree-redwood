@@ -1,5 +1,5 @@
-otree\_redwood\.utils module
-============================
+otree\_redwood.utils module
+===========================
 
 .. automodule:: otree_redwood.utils
     :members:
