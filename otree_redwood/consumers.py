@@ -88,8 +88,11 @@ class EventConsumer(WebsocketConsumer):
                     value=content['payload'])
 
             with stats.track('handing event to group'):
-                event_handler = getattr(group, '_on_{}_event'.format(content['channel']))
-                event_handler(event)
+                try:
+                    event_handler = getattr(group, '_on_{}_event'.format(content['channel']))
+                    event_handler(event)
+                except AttributeError:
+                    pass
 
     def send(self, content):
         self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
