@@ -88,9 +88,6 @@ class Group(BaseGroup):
     Ensures run-only-once semantics.
     """
 
-    silo_num = models.IntegerField(null=True)
-    """This group's silo number. Set by `group_randomly_in_silos` from `SubsessionSilosMixin`"""
-
     def period_length(self):
         """Implement this to set a timeout on the page. A message will be sent
         on the period_start when all players in the group have connected their
