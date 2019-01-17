@@ -20,23 +20,37 @@ by using the "oTree" object, or with the otree-constants tag itself.
 required in any template using the otree-redwood components:
 
 ```
-<script>
- 	var oTree = oTree || {};
-   (function() {
-     oTree.group = parseInt("{{ player.group.pk }}");
-     oTree.group = isNaN(oTree.group) ? null : oTree.group;
-     oTree.role = "{{ player.role }}";
-     oTree.participantCode = "{{ player.participant.code }}";
-     oTree.appName = "{{ subsession.app_name }}";
-     oTree.idInGroup = "{{ player.id_in_group }}";
-     oTree.csrfToken = "{{ csrf_token }}";
-     {% if view.is_debug %}
-     oTree.debug = true;
-     {% else %}
-     oTree.debug = false;
-     {% endif %}
-   })();
- </script>
+	<script>
+		var oTree = oTree || {};
+		(function() {
+			oTree.group = {};
+			oTree.group.pk = parseInt("{{ player.group.pk }}");
+			oTree.group.pk = isNaN(oTree.group.pk) ? null : oTree.group.pk;
+			oTree.group.players = [];
+			let id_in_group, payoff;
+			{% for p in player.group.get_players %}
+				id_in_group = parseInt("{{ p.id_in_group }}");
+				payoff = parseFloat("{{ p.payoff }}")
+				oTree.group.players.push({
+					participantCode: "{{ p.participant.code}}",
+					role: "{{ p.role }}",
+					id_in_group: isNaN(id_in_group) ? null : id_in_group,
+					payoff: isNaN(payoff) ? null : payoff,
+				});
+			{% endfor %}
+			oTree.role = "{{ player.role }}";
+			oTree.participantCode = "{{ player.participant.code }}";
+			oTree.appName = "{{ subsession.app_name }}";
+			oTree.idInGroup = "{{ player.id_in_group }}";
+			oTree.role = "{{ player.role }}";
+			oTree.csrfToken = "{{ csrf_token }}";
+			{% if view.is_debug %}
+			oTree.debug = true;
+			{% else %}
+			oTree.debug = false;
+			{% endif %}
+		})();
+	</script>
  ```
 
 https://otree-redwood.readthedocs.io/webcomponents.html
@@ -51,9 +65,13 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 		Polymer({
 			is: 'otree-constants',
 			properties: {
-				/** Group primary key, e.g. {{ player.group.pk }} */
+				/** Object containing info about the group this player is in.
+					group.pk is the group object's primary key
+					group.players is an array of objects with player code, role, id in group and payoff
+					for each player in the group
+				  */
 				group: {
-					type: Number,
+					type: Object,
 					notify: true,
 					readonly: true,
 					value: () => {
@@ -96,6 +114,15 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 					readonly: true,
 					value: () => {
 						return oTree.idInGroup;
+					}
+				},
+				/** Player's role. e.g. {{ player.role }} */
+				role: {
+					type: String,
+					notify: true,
+					readonly: true,
+					value: () => {
+						return oTree.role;
 					}
 				},
 				/** {{ csrf_token }} */

@@ -100,7 +100,7 @@ https://otree-redwood.readthedocs.io/webcomponents.html
 						window.location.host +
 						'/redwood' +
 						'/app-name/' + this.$.constants.appName +
-						'/group/' + this.$.constants.group +
+						'/group/' + this.$.constants.group.pk +
 						'/participant/' + this.$.constants.participantCode +
 						'/');
 					socket = new ReconnectingWebSocket(addr, null, {
