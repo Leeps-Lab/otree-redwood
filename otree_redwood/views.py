@@ -44,7 +44,7 @@ def AppSpecificExportCSV(app_name, display_name, get_output_table, get_output_ta
             )
 
             w = csv.writer(response)
-            w.writerow(get_output_table_header())
+            w.writerow(get_output_table_header(list(groups)))
             for rows in tables:
                 w.writerows(rows)
 
