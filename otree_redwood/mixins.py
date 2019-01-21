@@ -9,7 +9,7 @@ class SubsessionSilosMixin(models.Model):
     using silos, Players will only ever be matched with other players in their silo.
     To use, include SubsessionSilosMixin as a superclass for the Subsession class and GroupSilosMixin
     as a superclass for the Group class in your experiment's models.py. Then call `group_randomly_in_silos` in 
-    `Subsession.before_session_starts` and pass it the desired number of groups in each silo:
+    `Subsession.before_session_starts` and pass it the desired number of silos:
 
     .. code-block:: python
     
@@ -21,9 +21,6 @@ class SubsessionSilosMixin(models.Model):
         class Group(BaseGroup, GroupSilosMixin):
             pass
     
-    If the total number of groups is not a multiple of `groups_per_silo`, then one of the generated
-    silos will have fewer than `groups_per_silo` groups in it.
-
     Each group's silo number is saved in `Group.silo_num` and can be accessed later for output purposes.
     """
 
@@ -37,7 +34,6 @@ class SubsessionSilosMixin(models.Model):
             raise ValueError('number of silos cannot be greater than number of groups')
 
         groups_per_silo = math.ceil(len(groups) / num_silos)
-        # num_silos = math.ceil(len(groups) / groups_per_silo)
         silos = [groups[x:x+groups_per_silo] for x in range(0, num_silos * groups_per_silo, groups_per_silo)]
         randomized_groups = []
         for silo in silos:
