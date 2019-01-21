@@ -30,10 +30,14 @@ class SubsessionSilosMixin(models.Model):
     class Meta:
         abstract = True
 
-    def group_randomly_in_silos(self, groups_per_silo, fixed_id_in_group=False):
+    def group_randomly_in_silos(self, num_silos, fixed_id_in_group=False):
 
         groups = self.get_group_matrix()
-        num_silos = math.ceil(len(groups) / groups_per_silo)
+        if num_silos > len(groups):
+            raise ValueError('number of silos cannot be greater than number of groups')
+
+        groups_per_silo = math.ceil(len(groups) / num_silos)
+        # num_silos = math.ceil(len(groups) / groups_per_silo)
         silos = [groups[x:x+groups_per_silo] for x in range(0, num_silos * groups_per_silo, groups_per_silo)]
         randomized_groups = []
         for silo in silos:
