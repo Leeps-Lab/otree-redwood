@@ -196,11 +196,18 @@ class DecisionGroup(Group):
     """:attr:`group_decisions` holds a map from participant code to their current decision."""
     subperiod_group_decisions = JSONField(null=True)
     """:attr:`subperiod_group_decisions` is a copy of the state of
-    :attr:`group_decisions` at the end of each subperiod.
-    """
+    :attr:`group_decisions` at the end of each subperiod."""
+    _group_decisions_updated = models.BooleanField(default=False)
+    """:attr:`_group_decisions_updated` is a private field used with rate limiting to determine
+    whether group decisions need to be resent."""
 
     def num_subperiods(self):
         """Override to turn on sub-period behavior. None by default."""
+        return None
+    
+    def rate_limit(self):
+        """Override to turn on rate-limiting behavior. If used, the return value of rate_limit
+        determines the minimum time between broadcasted ::attr::`group_decisions` updates."""
         return None
 
     def when_all_players_ready(self):
@@ -219,6 +226,21 @@ class DecisionGroup(Group):
                 self.period_length(),
                 self,
                 self._subperiod_tick)
+            emitter.start()
+        elif self.rate_limit():
+            def _tick(current_interval, intervals):
+                self.refresh_from_db()
+                if self._group_decisions_updated:
+                    self.send('group_decisions', self.group_decisions)
+                    self._group_decisions_updated = False
+                    self.save(update_fields=['_group_decisions_updated'])
+
+            update_period = self.rate_limit()
+            emitter = DiscreteEventEmitter(
+                update_period, 
+                self.period_length(),
+                self,
+                _tick)
             emitter.start()
         self.save()
 
@@ -240,6 +262,7 @@ class DecisionGroup(Group):
             return
         with track('_on_decisions_event'):
             self.group_decisions[event.participant.code] = event.value
-            self.save(update_fields=['group_decisions'])
-            if not self.num_subperiods():
+            self._group_decisions_updated = True
+            self.save(update_fields=['group_decisions', '_group_decisions_updated'])
+            if not self.num_subperiods() and not self.rate_limit():
                 self.send('group_decisions', self.group_decisions)
