@@ -1,0 +1,12 @@
+Django==1.11.2 # for heroku, needs to be explicitly in requirements file
+otree-redwood
+txredisapi==1.4.4 # enable Twisted for asgiredis Channel Layer
+django-extensions==1.8.1 # IPython shell with otree shell_plus [--notebook]
+Twisted[tls,http2]==17.9
+-e git+https://github.com/Leeps-Lab/otree-core#egg=otree-core
+channels==1.1.8
+idna>=2.5
+zope.interface==4.2.0
+six==1.10.0
+pytz==2017.3
+psycopg2-binary
