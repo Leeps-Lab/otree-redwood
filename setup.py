@@ -54,5 +54,6 @@ setup(
         'channels>=1,<2',
         'jsonfield>=2,<3',
         'mockredispy>=2.9.0,<3',
+        'django_extensions',
     ],
 )

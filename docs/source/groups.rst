@@ -79,13 +79,14 @@ with the :ref:`redwood-decision` component.
 num_subperiods(self)
 ~~~~~~~~~~~~~~~~~~~~
 
-The ``num_subperiods`` function can return an integer or None. The period will
+The ``num_subperiods`` function can return an integer or None. If ``num_subperiods``
+returns something other than None, each period will
 be divided into ``num_subperiods`` intervals of length ``period_length /
 num_subperiods`` seconds. Each sub-period the current ``group_decisions`` gets
 copied into the ``subperiod_group_decisions``. Effectively this means the
 players can only make decisions at the boundary of every sub-period. E.g. if
 there are 12 sub-periods, players make 12 decisions during the course of the
-period.
+period. By default, ``num_subperiods`` returns None and this behavior is disabled.
 
 group_decisions
 ~~~~~~~~~~~~~~~
@@ -97,4 +98,5 @@ subperiod_group_decisions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``subperiod_group_decisions`` contains a dictionary mapping a participant code
-to their decision value in the most recent subperiod.
+to their decision value in the most recent subperiod. This field is only set when
+``num_subperiods`` is used and subperiod behavior is enabled.

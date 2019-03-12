@@ -3,21 +3,34 @@
 Getting Started
 ===============
 
-Python Development Libraries
+Gotchas
 ----------------------------
+
+otree-redwood currently only works with python3 and Google Chrome. We have long term plans to add support for other browsers, but for now only google chrome will work correctly.
 
 If you see an error that looks like `error: Python.h: No such file or directory`, you need to install the Python development libraries. These should be included on OS X. On Linux, you can install them with your package manager, for example:
 
 .. code-block:: bash
 
- > sudo apt-get install python-dev
+ sudo apt-get install python3-dev
+
+If your Redwood experiment generates a large number of messages, you may get warnings from oTree about sqlite running out of connections.
+The solution to this problem is to use a fully featured database such as Postgres. Instructions for integrating Postgres with
+oTree can be found in the `oTree docs <https://otree.readthedocs.io/en/latest/server/intro.html>`_.
 
 Option 1 - Clone the Leeps-Lab oTree repository.
 ------------------------------------------------
 
 .. code-block:: bash
 
- > git clone https://github.com/Leeps-Lab/oTree
+ git clone https://github.com/Leeps-Lab/oTree
+ cd oTree
+ git submodule update --recursive --remote
+ virtualenv -p `which python3` venv
+ source venv/bin/activate
+ pip install -r requirements.txt
+ otree resetdb
+ otree runserver
 
 Cloning the repository is the fastest way to get started. You can copy one of
 the 3 existing experiments or modify them in-place.
@@ -25,20 +38,34 @@ the 3 existing experiments or modify them in-place.
 Option 2 - Use otree-redwood in your existing oTree repository.
 --------------------------------------------------------------------
 
-1. Install the otree-redwood library using pip.
+1. Use pip to install the otree-redwood library and the LEEPS fork of otree-core:
 
 .. code-block:: bash
 
- > pip install otree-redwood
+ pip install otree-redwood git+https://github.com/leeps-lab/otree-core
 
-2. Add otree-redwood as a dependency in ``requirements_base.txt``. pip
-will tell you the version that was installed.
+2. Save current versions of all dependencies in a requirements file so they can be quickly installed later:
 
 .. code-block:: bash
 
- > otree-redwood=<Fill in version from pip here>
+  pip freeze > requirements_base.txt
 
-3. Use the otree-redwood classes in your experiment's models.py file.
+Install dependencies later with
+
+.. code-block:: bash
+
+  pip install -r requirements_base.txt
+
+3. Update INSTALLED_APPS and EXTENSION_APPS in your settings.py
+
+.. code-block:: python
+
+ ...
+ INSTALLED_APPS = ['otree', 'django_extensions']
+ EXTENSION_APPS = ['otree_redwood']
+ ...
+
+4. Use the otree-redwood classes in your experiment's models.py file:
 
 Instead of extending otree.api.BaseGroup, your Group class extends one of the
 otree-redwood Groups - :ref:`BaseGroup` or :ref:`DecisionGroup`.
@@ -64,29 +91,27 @@ You can let the player choose their initial decision with a normal oTree page.
    def initial_decision(self):
      return 0.5
 
-4. Use the otree-redwood web components in one of your experiments HTML templates.
+5. Use the otree-redwood web components in one of your experiments HTML templates.
+
+Make sure your template inherits from "otree_redwood/Page.html" instead of the usual
+"global/Page.html". This is required for the otree-constants webcomponent to work correctly.
+
+An example minimal otree_redwood template:
 
 .. code-block:: html+django
 
+ {% extends "otree_redwood/Page.html" %}
+
  {% block scripts %}
+   <!-- Import the redwood-decision and redwood-period webcomponents. -->
+   <link
+     rel="import"
+     href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
+   <link
+     rel="import"
+     href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
+   
    <script>
-     // Boilerplate that lets you access useful oTree template variables from Javascript.
-     var oTree = oTree || {};
-     (function() {
-       oTree.group = parseInt("{{ player.group.pk }}");
-       oTree.group = isNaN(oTree.group) ? null : oTree.group;
-       oTree.role = "{{ player.role }}";
-       oTree.participantCode = "{{ player.participant.code }}";
-       oTree.appName = "{{ subsession.app_name }}";
-       oTree.idInGroup = "{{ player.id_in_group }}";
-       oTree.csrfToken = "{{ csrf_token }}";
-       {% if view.is_debug %}
-       oTree.debug = true;
-       {% else %}
-       oTree.debug = false;
-       {% endif %}
-     })();
-   				
      // Get the decision component and other-decision element.
      var decision = document.querySelector("redwood-decision");
      var otherDecision = document.getElementById("other-decision");
@@ -109,25 +134,15 @@ You can let the player choose their initial decision with a normal oTree page.
        decision.myDecision = d;
      }
    </script>
+ {% endblock %}
    
-   // Import the redwood-decision and redwood-period webcomponents.
-   <link
-     rel="import"
-     href="/static/otree-redwood/webcomponents/redwood-decision/redwood-decision.html">
-   <link
-     rel="import"
-     href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
-   {% endblock %}
+ {% block content %}
+   <!-- Include the components on the page -->
+   <redwood-period></redwood-period>
+   <redwood-decision></redwood-decision>
    
-   {% block content %}
-     <!-- Include the components on the page -->
-     <redwood-period></redwood-period>
-     <redwood-decision></redwood-decision>
+   <p>Other Decision: <span id="other-decision"></span></p>
    
-     <p>Other Decision: <span id="other-decision"></span></p>
-   
-     <button onclick="setDecision(0)">Decision=0</button>
-     <button onclick="setDecision(1)">Decision=1</button>
-   
-     <!-- The rest of your oTree template goes here -->
-   {% endblock %}
+   <button type="button" onclick="setDecision(0)">Decision=0</button>
+   <button type="button" onclick="setDecision(1)">Decision=1</button>
+ {% endblock %}
