@@ -5,7 +5,7 @@ Examples
 
 .. _GeneralBimatrix:
 
-`General Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/bimatrix>`_
+`General Bimatrix <https://github.com/Leeps-Lab/bimatrix>`_
 -------------------------------------------------------------------------------------------
 
 .. image:: bimatrix_screenshot.png
@@ -21,7 +21,7 @@ times over the course of a 2-3 minute period.
 
 .. _StochasticBimatrix:
 
-`Stochastic Bimatrix <https://github.com/Leeps-Lab/oTree/tree/master/stochastic_bimatrix>`_
+`Stochastic Bimatrix <https://github.com/Leeps-Lab/stochastic_bimatrix>`_
 -------------------------------------------------------------------------------------------
 
 .. image:: stochastic_bimatrix_screenshot.png
@@ -35,7 +35,7 @@ websocket events, as opposed to just simply rebroadcasting them to the group.
 
 .. _ImperfectMonitoring:
 
-`Imperfect Monitoring <https://github.com/Leeps-Lab/oTree/tree/master/imperfect_monitoring>`_
+`Imperfect Monitoring <https://github.com/Leeps-Lab/imperfect_monitoring>`_
 ---------------------------------------------------------------------------------------------
 
 .. image:: imperfect_monitoring_screenshot.png
