@@ -1,0 +1,6 @@
+{
+  "name": "otree-redwood",
+  "short_name": "otree-redwood",
+  "start_url": "/",
+  "display": "standalone"
+}

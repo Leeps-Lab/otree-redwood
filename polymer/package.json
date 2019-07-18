@@ -1,0 +1,9 @@
+{
+  "name": "otree-redwood",
+  "dependencies": {
+    "@polymer/iron-flex-layout": "^3.0.1",
+    "@polymer/polymer": "^3.0.0",
+    "@polymer/iron-component-page": "^4.0.1",
+    "@webcomponents/webcomponentsjs": "^2.0.0"
+  }
+}
