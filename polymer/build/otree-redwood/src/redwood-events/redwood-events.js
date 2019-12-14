@@ -149,9 +149,9 @@ class RedwoodEvents extends PolymerElement {
     }
 
     listeners.forEach(l => {
-      l.fire('event', event, {
-        bubbles: false
-      });
+      l.dispatchEvent(new CustomEvent('event', {
+        detail: event
+      }));
     });
   }
   /**

@@ -106,10 +106,11 @@ class RedwoodDecision extends PolymerElement {
         if (this.myDecision === null) {
             this.myDecision = this.groupDecisions[pcode];
         }
-        this.fire('group-decisions-changed');
+        this.dispatchEvent(new CustomEvent('group-decisions-changed'));
     }
 
-    _computeOtherDecision(groupDecisions) {
+    _computeOtherDecision(groupDecisionsChange) {
+        const groupDecisions = groupDecisionsChange.value;
         if (!groupDecisions) return null;
         const pcode = this.$.constants.participantCode;
 

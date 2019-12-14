@@ -1,4 +1,5 @@
-from channels import Group as ChannelGroup
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from contextlib import contextmanager
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -7,8 +8,6 @@ from django.db import models
 import json
 from jsonfield import JSONField
 import logging
-import otree.common_internal
-from otree import matching
 from otree.models import BaseGroup
 from otree.views.abstract import get_redis_lock
 from otree_redwood.stats import track 
@@ -30,7 +29,7 @@ class Event(models.Model):
 
     timestamp = models.DateTimeField(null=False)
     """Time the event was received or sent by the server."""
-    content_type = models.ForeignKey(ContentType, related_name='content_type_events')
+    content_type = models.ForeignKey(ContentType, related_name='content_type_events', on_delete=models.CASCADE)
     """Used to relate this Event to an arbitrary Group."""
     group_pk = models.PositiveIntegerField()
     """Primary key of the Event's related Group."""
@@ -41,7 +40,8 @@ class Event(models.Model):
     participant = models.ForeignKey(
         'otree.Participant',
         related_name='+',
-        null=True)
+        null=True,
+        on_delete=models.CASCADE)
     """The Participant who sent the event - null for server-sent events."""
     value = JSONField()
     """Arbitrary Event payload."""
@@ -71,7 +71,8 @@ class Connection(models.Model):
     participant = models.ForeignKey(
         'otree.Participant',
         related_name='+',
-        null=True)
+        null=True,
+        on_delete=models.CASCADE)
     """Each Participant should have only one connection."""
 
 
@@ -127,10 +128,10 @@ class Group(BaseGroup):
 
             if self.period_length():
                 # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
-                self._timer = threading.Timer(
+                timer = threading.Timer(
                     self.period_length(),
                     lambda: self.send('state', 'period_end'))
-                self._timer.start()
+                timer.start()
 
     def _on_disconnect(self, participant):
         """Trigger the :meth:`when_player_disconnects` callback."""
@@ -151,11 +152,17 @@ class Group(BaseGroup):
                     group=self,
                     channel=channel,
                     value=payload)
-            ChannelGroup(str(self.pk)).send(
-                    {'text': json.dumps({
-                        'channel': channel,
-                        'payload': payload
-                    })})
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                str(self.pk),
+                {
+                'type': 'redwood.send_to_group',
+                'text': {
+                    'channel': channel,
+                    'payload': payload,
+                    }
+                }
+            )
 
     def save(self, *args, **kwargs):
         """
@@ -174,6 +181,10 @@ class Group(BaseGroup):
                 if isinstance(field, JSONField) and (update_fields is None or field.attname in update_fields):
                     json_fields[field.attname] = getattr(self, field.attname)
             self.__class__._default_manager.filter(pk=self.pk).update(**json_fields)
+    
+    @property
+    def app_name(self):
+        return self.session.config['name']
 
 
 @contextmanager

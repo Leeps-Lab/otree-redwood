@@ -1,7 +1,7 @@
 from collections import defaultdict
 from huey.contrib.djhuey import HUEY
 import mockredis
-import otree.common_internal
+import otree.common
 import time
 
 
@@ -14,7 +14,7 @@ class track():
         self.context = context
         global redis
         if not redis:
-            if otree.common_internal.USE_REDIS:
+            if otree.common.USE_REDIS:
                 redis = HUEY.storage.conn
             else:
                 redis = mockredis.mock_redis_client()

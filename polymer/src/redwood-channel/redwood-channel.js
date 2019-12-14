@@ -84,10 +84,13 @@ class RedwoodChannel extends PolymerElement {
         `;
     }
 
-
     _handleEvent(event) {
         if (event.detail.channel === this.channel) {
-            this.fire('event', event.detail);
+            this.dispatchEvent(new CustomEvent('event', {
+                detail: event.detail,
+                bubbles: true,
+                composed: true,
+            }));
         }
     }
 

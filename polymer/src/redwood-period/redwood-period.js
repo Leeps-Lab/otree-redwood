@@ -1,5 +1,5 @@
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
-import '../redwood-channel/redwood-channel.js;';
+import '../redwood-channel/redwood-channel.js';
 
 /*
 
@@ -46,10 +46,10 @@ class RedwoodPeriod extends PolymerElement {
         const state = event.detail.payload;
         if (state == 'period_start') {
             this.running = true;
-            this.fire('period-start');
+            this.dispatchEvent(new CustomEvent('period-start'));
         } else if (state == 'period_end') {
             this.running = false;
-            this.fire('period-end');
+            this.dispatchEvent(new CustomEvent('period-end'));
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '', true);
             xhr.setRequestHeader('X-CSRFToken', oTree.csrfToken);

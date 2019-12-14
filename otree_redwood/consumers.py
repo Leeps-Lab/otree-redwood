@@ -1,5 +1,6 @@
-from channels import Group
-from channels.generic.websockets import WebsocketConsumer
+from channels.generic.websocket import JsonWebsocketConsumer
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 import django.dispatch
@@ -16,45 +17,48 @@ def get_group(app_name, group_pk):
         models_module = importlib.import_module('{}.models'.format(app_name))
         return models_module.Group.objects.get(pk=group_pk)
 
-
-class EventConsumer(WebsocketConsumer):
+class EventConsumer(JsonWebsocketConsumer):
     
     url_pattern = (
-        r'^/redwood' +
+        r'^redwood' +
         '/app-name/(?P<app_name>[^/]+)'
         '/group/(?P<group>[0-9]+)' +
         '/participant/(?P<participant_code>[a-zA-Z0-9_-]+)' +
         '/$')
 
-    def connection_groups(self, **kwargs):
-        """
-        Called to return the list of groups to automatically add/remove
-        this connection to/from.
-        """
-        return [str(kwargs['group'])]
+    def connect(self):
+        self.accept()
+        self.url_params = self.scope['url_route']['kwargs']
 
-    def connect(self, message, **kwargs):
-        self.message.reply_channel.send({'accept': True})
+        group = get_group(self.url_params['app_name'], self.url_params['group'])
+        async_to_sync(self.channel_layer.group_add)(
+            str(group.pk),
+            self.channel_name
+        )
 
-        group = get_group(kwargs['app_name'], kwargs['group'])
-        participant = Participant.objects.get(code=kwargs['participant_code'])
+        participant = Participant.objects.get(code=self.url_params['participant_code'])
         try:
             last_state = Event.objects.filter(
                     channel='state',
                     content_type=ContentType.objects.get_for_model(group),
-                    group_pk=group.pk).order_by('timestamp')[0]
-            self.send({
+                    group_pk=group.pk).latest('timestamp')
+            self.send_json({
                 'channel': 'state',
                 'payload': last_state.value
             })
-        except IndexError:
+        except Event.DoesNotExist:
             pass
         Connection.objects.get_or_create(participant=participant)
         group._on_connect(participant)
 
-    def disconnect(self, message, **kwargs):
-        group = get_group(kwargs['app_name'], kwargs['group'])
-        participant = Participant.objects.get(code=kwargs['participant_code'])
+    def disconnect(self, close_code):
+        group = get_group(self.url_params['app_name'], self.url_params['group'])
+        async_to_sync(self.channel_layer.group_discard)(
+            str(group.pk),
+            self.channel_name
+        )
+
+        participant = Participant.objects.get(code=self.url_params['participant_code'])
         try:
             # TODO: Clean out stale connections if not terminated cleanly.
             Connection.objects.get(participant=participant).delete()
@@ -62,24 +66,20 @@ class EventConsumer(WebsocketConsumer):
             pass
         group._on_disconnect(participant)
 
-    def raw_receive(self, message, **kwargs):
-        content = json.loads(message['text'])
-        for (key, value) in kwargs.items():
-            content[key] = value
-
+    def receive_json(self, content):
         if content['channel'] == 'ping':
             with stats.track('recv_channel=ping'):
                 if content['avg_ping_time']:
                     stats.update('avg_ping_time', content['avg_ping_time'])
-                self.send({
+                self.send_json({
                     'channel': 'ping',
                     'timestamp': content['timestamp'],
                 })
                 return
 
         with stats.track('recv_channel=' + content['channel']):
-            group = get_group(kwargs['app_name'], kwargs['group'])
-            participant = Participant.objects.get(code=kwargs['participant_code'])
+            group = get_group(self.url_params['app_name'], self.url_params['group'])
+            participant = Participant.objects.get(code=self.url_params['participant_code'])
             with stats.track('saving event object to database'):
                 event = Event.objects.create(
                     group=group,
@@ -90,29 +90,49 @@ class EventConsumer(WebsocketConsumer):
             with stats.track('handing event to group'):
                 try:
                     event_handler = getattr(group, '_on_{}_event'.format(content['channel']))
-                    event_handler(event)
                 except AttributeError:
                     pass
+                else:
+                    event_handler(event)
+    
+    def redwood_send_to_group(self, event):
+        msg = event['text']
+        print('event:', msg)
+        self.send_json(msg)
 
-    def send(self, content):
-        self.message.reply_channel.send({'text': json.dumps(content)}, immediately=True)
 
+class EventWatcher(JsonWebsocketConsumer):
 
-class EventWatcher(WebsocketConsumer):
+    url_pattern = r'^redwood/events/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
 
-    url_pattern = r'^/redwood/events/session/(?P<session_code>[a-zA-Z0-9_-]+)/$'
+    def connect(self):
+        self.session_code = self.scope['url_route']['kwargs']['session_code']
+        self.events_group_name = 'redwood_events-{}'.format(self.session_code)
+        async_to_sync(self.channel_layer.group_add)(
+            self.events_group_name,
+            self.channel_name
+        )
+        self.accept()
 
-    def connection_groups(self, **kwargs):
-        """
-        Called to return the list of groups to automatically add/remove
-        this connection to/from.
-        """
-        return ['events-' + kwargs['session_code']]
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.events_group_name,
+            self.channel_name
+        )
 
-    def connect(self, message, **kwargs):
-        self.message.reply_channel.send({'accept': True})
+    def redwood_send_to_watcher(self, event):
+        msg = event['text']
+        print('watcher:', msg)
+        self.send_json(msg)
 
 
 @django.dispatch.receiver(post_save, sender=Event)
 def on_event_save(sender, instance, **kwargs):
-    Group('events-' + instance.group.session.code).send({'text': json.dumps(instance.message)})
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'redwood_events-{}'.format(instance.group.session.code),
+        {
+            'type': 'redwood.send_to_watcher',
+            'text': json.dumps(instance.message)
+        }
+    )
