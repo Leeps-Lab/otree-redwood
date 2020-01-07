@@ -1,5 +1,5 @@
 import math
-from otree import matching
+from otree.common import _group_randomly
 from django.db import models
 
 class SubsessionSilosMixin(models.Model):
@@ -37,7 +37,7 @@ class SubsessionSilosMixin(models.Model):
         silos = [groups[x:x+groups_per_silo] for x in range(0, num_silos * groups_per_silo, groups_per_silo)]
         randomized_groups = []
         for silo in silos:
-            randomized_groups += matching.randomly(silo, fixed_id_in_group)
+            randomized_groups += _group_randomly(silo, fixed_id_in_group)
         self.set_group_matrix(randomized_groups)
 
         for i, group_arr in enumerate(randomized_groups):

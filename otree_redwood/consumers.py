@@ -97,7 +97,6 @@ class EventConsumer(JsonWebsocketConsumer):
     
     def redwood_send_to_group(self, event):
         msg = event['text']
-        print('event:', msg)
         self.send_json(msg)
 
 
@@ -122,7 +121,6 @@ class EventWatcher(JsonWebsocketConsumer):
 
     def redwood_send_to_watcher(self, event):
         msg = event['text']
-        print('watcher:', msg)
         self.send_json(msg)
 
 
