@@ -47,13 +47,7 @@ setup(
         #'Sphinx',
         #'sphinx-autobuild',
         #'sphinx-rtd-theme',
-        # Recommended:
-        #'asgi_redis>=1.4,<2'
-        'daphne>=1,<2',
-        'chan>=0.3,<1',
-        'channels>=1,<2',
-        'jsonfield>=2,<3',
-        'mockredispy>=2.9.0,<3',
-        'django_extensions',
+        'jsonfield>=2.0.2',
+        'mockredispy>=2.9.3',
     ],
 )
