@@ -4,3 +4,5 @@ dist/
 .cache/
 _build/
 .vscode/
+**/.DS_Store
+*.code-workspace

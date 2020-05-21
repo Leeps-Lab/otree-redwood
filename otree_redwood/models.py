@@ -81,7 +81,7 @@ class Group(BaseGroup):
     Redwood-specific functions for coordinating inter-page communication for
     players in the Group.
     """
-    class Meta:
+    class Meta(BaseGroup.Meta):
         abstract = True
 
     ran_ready_function = models.DateTimeField(null=True)
@@ -200,7 +200,7 @@ class DecisionGroup(Group):
     channel.
     """
 
-    class Meta:
+    class Meta(Group.Meta):
         abstract = True
 
     group_decisions = JSONField(null=True)
