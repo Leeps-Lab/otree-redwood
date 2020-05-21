@@ -25,11 +25,11 @@ import json
 with open('settings.json') as f:
     otree_settings = json.load(f)
 
-from django.conf import settings
-settings.configure(**otree_settings)
+# from django.conf import settings
+# settings.configure(**otree_settings)
 
-import django
-django.setup()
+# import django
+# django.setup()
 
 # -- General configuration ------------------------------------------------
 
