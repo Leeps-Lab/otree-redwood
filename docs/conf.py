@@ -21,9 +21,9 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
 
-import json
-with open('settings.json') as f:
-    otree_settings = json.load(f)
+# import json
+# with open('settings.json') as f:
+#     otree_settings = json.load(f)
 
 # from django.conf import settings
 # settings.configure(**otree_settings)
