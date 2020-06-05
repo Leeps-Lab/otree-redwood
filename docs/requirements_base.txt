@@ -1,4 +1,4 @@
-Django==1.11.2 # for heroku, needs to be explicitly in requirements file
+Django==1.11.29 # for heroku, needs to be explicitly in requirements file
 otree-redwood
 txredisapi==1.4.4 # enable Twisted for asgiredis Channel Layer
 django-extensions==1.8.1 # IPython shell with otree shell_plus [--notebook]
