@@ -1,7 +1,7 @@
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from contextlib import contextmanager
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.db import models
@@ -88,6 +88,10 @@ class Group(BaseGroup):
     """Set when the :meth:`when_all_players_ready` function has been run.
     Ensures run-only-once semantics.
     """
+    events = GenericRelation(Event, content_type_field='content_type', object_id_field='group_pk')
+    """Allows Group to query all Event models associated with it.
+    This effectively adds an 'events' related name to the Event.group GenericForeignKey.
+    """
 
     def period_length(self):
         """Implement this to set a timeout on the page. A message will be sent
@@ -96,12 +100,32 @@ class Group(BaseGroup):
         period_length seconds from the period_start message.
         """
         return None
+    
+    def get_start_time(self):
+        """Returns a datetime.datetime object representing the time that this period started,
+        or None if the period hasn't started yet.
+        """
+        try:
+            return self.events.get(channel='state', value='period_start').timestamp
+        except Event.DoesNotExist:
+            return None
+
+    def get_end_time(self):
+        """Returns a datetime.datetime object representing the time that this period ended.
+        Returns None if :meth:`period_length` is not set, or if the period hasn't ended yet.
+        """
+        try:
+            return self.events.get(channel='state', value='period_end').timestamp
+        except Event.DoesNotExist:
+            return None
 
     def when_all_players_ready(self):
         """Implement this to perform an action for the group once all players are ready."""
+        pass
 
     def when_player_disconnects(self, player):
         """Implement this to perform an action when a player disconnects."""
+        pass
 
     def _on_connect(self, participant):
         """Called from the WebSocket consumer. Checks if all players in the group
@@ -211,6 +235,13 @@ class DecisionGroup(Group):
     _group_decisions_updated = models.BooleanField(default=False)
     """:attr:`_group_decisions_updated` is a private field used with rate limiting to determine
     whether group decisions need to be resent."""
+
+    def get_group_decisions_events(self):
+        """Returns a list of all Event objects sent on the ``group_decisions`` channel so far, ordered
+        by timestamp. If the period has ended, this gives the complete decision history of this DecisionGroup
+        in this period.
+        """
+        return list(self.events.filter(channel='group_decisions'))
 
     def num_subperiods(self):
         """Override to turn on sub-period behavior. None by default."""

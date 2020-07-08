@@ -1,7 +1,6 @@
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 import django.dispatch
 import importlib
@@ -38,10 +37,7 @@ class EventConsumer(JsonWebsocketConsumer):
 
         participant = Participant.objects.get(code=self.url_params['participant_code'])
         try:
-            last_state = Event.objects.filter(
-                    channel='state',
-                    content_type=ContentType.objects.get_for_model(group),
-                    group_pk=group.pk).latest('timestamp')
+            last_state = group.events.filter(channel='state').latest('timestamp')
             self.send_json({
                 'channel': 'state',
                 'payload': last_state.value
@@ -81,8 +77,7 @@ class EventConsumer(JsonWebsocketConsumer):
             group = get_group(self.url_params['app_name'], self.url_params['group'])
             participant = Participant.objects.get(code=self.url_params['participant_code'])
             with stats.track('saving event object to database'):
-                event = Event.objects.create(
-                    group=group,
+                event = group.events.create(
                     participant=participant,
                     channel=content['channel'],
                     value=content['payload'])
