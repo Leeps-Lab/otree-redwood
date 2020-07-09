@@ -9,7 +9,6 @@ import json
 from jsonfield import JSONField
 import logging
 from otree.models import BaseGroup
-from otree.views.abstract import get_redis_lock
 from otree_redwood.stats import track 
 from otree_redwood.utils import DiscreteEventEmitter
 import redis_lock
@@ -132,9 +131,7 @@ class Group(BaseGroup):
         have connected; runs :meth:`when_all_players_ready` once all connections
         are established.
         """
-        lock = get_redis_lock()
-        if not lock:
-            lock = fake_lock()
+        lock = fake_lock()
 
         with lock:
             self.refresh_from_db()
