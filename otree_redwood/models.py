@@ -11,7 +11,6 @@ import logging
 from otree.models import BaseGroup
 from otree_redwood.stats import track 
 from otree_redwood.utils import DiscreteEventEmitter
-import redis_lock
 import threading
 import time
 
