@@ -1,6 +1,5 @@
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from contextlib import contextmanager
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
@@ -130,28 +129,25 @@ class Group(BaseGroup):
         have connected; runs :meth:`when_all_players_ready` once all connections
         are established.
         """
-        lock = fake_lock()
-
-        with lock:
-            self.refresh_from_db()
-            if self.ran_ready_function:
+        self.refresh_from_db()
+        if self.ran_ready_function:
+            return
+        for player in self.get_players():
+            if Connection.objects.filter(participant__code=player.participant.code).count() == 0:
                 return
-            for player in self.get_players():
-                if Connection.objects.filter(participant__code=player.participant.code).count() == 0:
-                    return
-                    
-            self.when_all_players_ready()
-            self.ran_ready_function = timezone.now()
-            self.save()
+                
+        self.when_all_players_ready()
+        self.ran_ready_function = timezone.now()
+        self.save()
 
-            self.send('state', 'period_start')
+        self.send('state', 'period_start')
 
-            if self.period_length():
-                # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
-                timer = threading.Timer(
-                    self.period_length(),
-                    lambda: self.send('state', 'period_end'))
-                timer.start()
+        if self.period_length():
+            # TODO: Should replace this with something like Huey/Celery so it'll survive a server restart.
+            timer = threading.Timer(
+                self.period_length(),
+                lambda: self.send('state', 'period_end'))
+            timer.start()
 
     def _on_disconnect(self, participant):
         """Trigger the :meth:`when_player_disconnects` callback."""
@@ -205,13 +201,6 @@ class Group(BaseGroup):
     @property
     def app_name(self):
         return self.session.config['name']
-
-
-@contextmanager
-def fake_lock():
-    logger.warning('using fake lock - install redis in production')
-    yield
-    logger.warning('exiting fake lock - install redis in production')
 
 
 class DecisionGroup(Group):
