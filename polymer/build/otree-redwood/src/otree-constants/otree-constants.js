@@ -31,6 +31,14 @@ class OtreeConstants extends PolymerElement {
           return oTree.group;
         }
       },
+      roundNumber: {
+        type: Number,
+        notify: true,
+        readonly: true,
+        value: () => {
+          return oTree.roundNumber;
+        }
+      },
 
       /** Player's role, e.g. {{ player.role }} */
       role: {
@@ -71,16 +79,6 @@ class OtreeConstants extends PolymerElement {
         readonly: true,
         value: () => {
           return oTree.idInGroup;
-        }
-      },
-
-      /** Player's role. e.g. {{ player.role }} */
-      role: {
-        type: String,
-        notify: true,
-        readonly: true,
-        value: () => {
-          return oTree.role;
         }
       },
 

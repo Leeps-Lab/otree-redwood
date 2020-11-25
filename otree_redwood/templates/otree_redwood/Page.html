@@ -23,6 +23,7 @@
                 });
             {% endfor %}
             oTree.role = "{{ player.role }}";
+            oTree.roundNumber = "{{ player.round_number }}";
             oTree.participantCode = "{{ player.participant.code }}";
             oTree.appName = "{{ group.app_name }}";
             oTree.idInGroup = "{{ player.id_in_group }}";
