@@ -1,7 +1,5 @@
 from collections import defaultdict
-from huey.contrib.djhuey import HUEY
 import mockredis
-import otree.common
 import time
 
 
@@ -14,10 +12,7 @@ class track():
         self.context = context
         global redis
         if not redis:
-            if otree.common.USE_REDIS:
-                redis = HUEY.storage.conn
-            else:
-                redis = mockredis.mock_redis_client()
+            redis = mockredis.mock_redis_client()
 
     def __enter__(self):
         self.start = time.time()
@@ -39,10 +34,7 @@ def update(context, value):
 def items():
     global redis
     if not redis:
-        if otree.common_internal.USE_REDIS:
-            redis = HUEY.storage.conn
-        else:
-            redis = mockredis.mock_redis_client()
+        redis = mockredis.mock_redis_client()
     items = {}
     for key in redis.smembers('redwood-tracking-contexts'):
         tracking_context = redis.hget(key, 'tracking_context')
