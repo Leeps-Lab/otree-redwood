@@ -56,10 +56,13 @@ class RedwoodPeriod extends PolymerElement {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '', true);
       xhr.setRequestHeader('X-CSRFToken', oTree.csrfToken);
-      xhr.send('');
+      xhr.send(''); // get post round delay from oTree global (defined in otree_redwood/Page.html template)
+      // if oTree global is undefined, maybe because the template hasn't been included, just use a default of 1000
+
+      const delay = typeof oTree === 'undefined' ? 1000 : oTree._post_round_delay;
       window.setTimeout(() => {
         window.location = window.location;
-      }, 1000);
+      }, delay);
     }
   }
 

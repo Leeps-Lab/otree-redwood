@@ -91,12 +91,18 @@ class Group(BaseGroup):
     """
 
     def period_length(self):
-        """Implement this to set a timeout on the page. A message will be sent
-        on the period_start when all players in the group have connected their
-        websockets. Another message will be send on the period_end channel
+        """Implement this to set a timeout on the page in seconds. A period_start message will be sent
+        on the state channel when all players in the group have connected their
+        websockets. A period_end message will be send on the state channel
         period_length seconds from the period_start message.
         """
         return None
+    
+    def post_round_delay(self):
+        """Implement this to change the delay between when the period ends and the page is advanced.
+        This delay should be provided in seconds. If :meth:`period_length` is not specified, this method does nothing.
+        """
+        return 1
     
     def get_start_time(self):
         """Returns a datetime.datetime object representing the time that this period started,

@@ -34,6 +34,11 @@
             {% else %}
             oTree.debug = false;
             {% endif %}
+
+            // this is the post-round delay for the redwood-period component
+            // this probably isn't the best place to put this but I put it here in the interest of simplicity
+            // this value isn't considered by otree-constants
+            oTree._post_round_delay = parseInt("{{ group.post_round_delay }}") * 1000;
         })();
     </script>
     
